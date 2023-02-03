@@ -13,7 +13,6 @@ export default {
 
 <template>
     <main class="layout" :class="className">
-        <LayoutHeader className="layout__header" />
         <section class="layout__content">
             <slot></slot>
         </section>
@@ -26,7 +25,8 @@ export default {
     flex-direction: column;
     min-height: 100vh;
 
-    &__header {}
+    &__header {
+    }
 
     &__content {
         box-sizing: border-box;

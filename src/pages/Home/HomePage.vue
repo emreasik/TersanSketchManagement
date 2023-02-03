@@ -1,12 +1,12 @@
 <template>
     <div class="home-page">
-        <Toolbar :icons="icons" />
+        <Toolbar :icons="icons" @tool-button-clicked="setToolButtonActive"/>
         <canvas ref="canvas" @click="handleCanvasClick"></canvas>
     </div>
 </template>
 
 <script>
-import Toolbar from '../../components/common/appItems/ToolButtons/Toolbar.vue'
+import Toolbar from '../../components/common/appItems/Toolbar/Toolbar.vue'
 import LocationIcon from '../../assets/icons/location_marker_icon.png';
 import CursorIcon from '../../assets/icons/cursor_icon.png';
 
@@ -20,11 +20,13 @@ export default {
             icons: [
                 {
                     id: 1,
-                    path: LocationIcon
+                    path: CursorIcon,
+                    active: true
                 },
                 {
                     id: 2,
-                    path: CursorIcon
+                    path: LocationIcon,
+                    active: false
                 }
             ]
         }
@@ -60,6 +62,12 @@ export default {
             image.height = (window.innerWidth / image.width) * image.height;
             image.width = window.innerWidth;
             this.drawCanvas(image);
+        },
+        setToolButtonActive(id) {
+            console.log(id);
+            this.icons.forEach(icon => {
+                icon.active = icon.id === id;
+            });
         }
     }
 }

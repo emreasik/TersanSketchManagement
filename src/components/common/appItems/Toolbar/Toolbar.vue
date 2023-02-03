@@ -1,6 +1,7 @@
 <template>
     <div class="tool-button">
-            <ToolButton :icon="icon.path" v-for="icon in icons" :key="icon.id"/>
+        <ToolButton :icon="icon" :isActive="icon.active" v-for="icon in icons" :key="icon.id"
+            @tool-button-clicked="setToolButtonActive"/>
     </div>
 </template>
 
@@ -17,6 +18,11 @@ export default {
             required: true
         }
     },
+    methods: {
+        setToolButtonActive(id) {
+            this.$emit('tool-button-clicked', id);
+        }
+    }
 };
 </script>
 

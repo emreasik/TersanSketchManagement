@@ -1,7 +1,7 @@
 <template>
-    <div class="tool-button__container">
-        <div @click="buttonClick" class=" tool-button__container__button">
-            <img :src="icon" alt="cursor">
+    <div class="tool-button__container" :class="{ active: isActive }" @click="$emit('toolButtonClicked', icon.id)">
+        <div class="tool-button__container__button">
+            <img :src="icon.path" alt="cursor">
         </div>
     </div>
 </template>
@@ -13,17 +13,23 @@ export default {
         icon: {
             type: String,
             required: true
+        },
+        isActive: {
+            type: Boolean,
+            default: false
         }
     },
-    methods: {
-        buttonClick() {
-            alert('clicked');
-        }
-    }
 }
 </script>
 
 <style lang="scss">
+@use '../../../../assets/variables' as v;
+
+.active {
+    background: v.$btn-toolbar-active-bg-color !important;
+    box-shadow: -3px 3px 8px -1px v.$btn-toolbar-active-bg-color !important;
+}
+
 .tool-button {
     display: flex;
     flex-direction: column;
@@ -37,13 +43,12 @@ export default {
 }
 
 .tool-button__container {
-    // box-shadow: -4px 4px 8px -1px rgba(20, 77, 129, 1);
     box-shadow: -3px 3px 8px -1px rgba(20, 77, 129, 1);
-
-    background: #144D81;
+    background: v.$btn-toolbar-bg-color;
     border-radius: 50%;
     width: 60px;
     height: 60px;
+    cursor: pointer;
 
     &__button {
         display: flex;
@@ -53,7 +58,6 @@ export default {
         margin: 0;
         width: 100%;
         height: 100%;
-
 
         img {
             width: 35px;

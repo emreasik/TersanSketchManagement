@@ -40,28 +40,28 @@ export default {
     margin-right: 10px;
     gap: 10px;
     // TODO 2 item gelince ortalama fixle
-}
 
-.tool-button__container {
-    box-shadow: -3px 3px 8px -1px rgba(20, 77, 129, 1);
-    background: v.$btn-toolbar-bg-color;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    cursor: pointer;
+    &__container {
+        box-shadow: -3px 3px 8px -1px rgba(20, 77, 129, 1);
+        background: v.$btn-toolbar-bg-color;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        cursor: pointer;
 
-    &__button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 0;
-        margin: 0;
-        width: 100%;
-        height: 100%;
+        &__button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
 
-        img {
-            width: 35px;
-            height: 35px;
+            img {
+                width: 35px;
+                height: 35px;
+            }
         }
     }
 }

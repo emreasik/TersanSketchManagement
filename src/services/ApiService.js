@@ -1,12 +1,8 @@
 import axios from "axios";
+import BuildingService from "./BuildingService";
 
-const fetcher = axios.create({
-    baseURL: "http://localhost:3000",
+export const fetcher = axios.create({
+    baseURL: "https://localhost:7052/api",
 });
 
-export default class ApiService {
-    static async getBuildings() {
-        const data = await fetcher.get("/buildings");
-        return data.data;
-    }
-}
+export const buildingService = new BuildingService(fetcher);

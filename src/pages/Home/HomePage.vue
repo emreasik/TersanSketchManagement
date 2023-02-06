@@ -1,10 +1,10 @@
 <script>
-import ApiService from '../../services/ApiService.js';
 import Toolbar from '../../components/common/appItems/Toolbar/Toolbar.vue'
 import LocationToolbarIcon from '../../assets/icons/location_marker_icon.png';
 import CursorToolbarIcon from '../../assets/icons/cursor_icon.png';
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
 import LocationMapIconClicked from '../../assets/icons/location_map_icon_clicked.png';
+import { buildingService } from '../../services/ApiService.js';
 
 export default {
     name: 'HomePage',
@@ -25,13 +25,21 @@ export default {
                     active: false
                 }
             ],
+            buildingDetails: {
+                name: 'Depo',
+                x: 0,
+                y: 0,
+                sketchId: 1,
+            },
             markPoints: [],
             isSketchMode: false,
+            serviceMarkPoints: [],
         }
     },
     async created() {
-        this.markPoints = await ApiService.getBuildings();
+        this.markPoints = await buildingService.getBuildings();
         console.log(this.markPoints);
+
         this.drawMarkPoints()
     },
     mounted() {
@@ -55,6 +63,9 @@ export default {
             img.onload = () => {
                 ctx.drawImage(img, x - 15, y - 25, 30, 30);
             }
+            this.buildingDetails.x = x - 15;
+            this.buildingDetails.y = y - 25;
+            buildingService.addBuilding(this.buildingDetails);
         },
         handleCanvasCursor(event) {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
@@ -76,7 +87,6 @@ export default {
                     this.markPoints.forEach(point => {
                         if (Math.abs(point.x - x) <= 30 && Math.abs(point.y - y) <= 30) {
                             ctx.drawImage(imgClicked, point.x, point.y, 30, 30);
-                            console.log("clicked");
                             card.style.left = `${parseInt(point.x) + 20}px`;
                             card.style.top = `${parseInt(point.y) + 25}px`;
                             card.classList.remove('d-none');

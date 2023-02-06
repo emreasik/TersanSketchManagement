@@ -40,6 +40,7 @@ export default {
     margin-right: 10px;
     gap: 10px;
     // TODO 2 item gelince ortalama fixle
+    z-index: 1;
 
     &__container {
         box-shadow: -3px 3px 8px -1px rgba(20, 77, 129, 1);

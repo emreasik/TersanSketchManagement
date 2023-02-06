@@ -1,8 +1,27 @@
 <template>
     <div class="home-page">
         <Toolbar :icons="icons" @tool-button-clicked="setToolButtonActive" />
-        <canvas ref="canvas"
-            v-on="isSketchMode ? { click: handleCanvasClick } : { click: handleCanvasCursor }"></canvas>
+        <div class="position-relative">
+            <canvas class="position-absolute" ref="canvas"
+                v-on="isSketchMode ? { click: handleCanvasClick } : { click: handleCanvasCursor }">
+            </canvas>
+            <div class="card position-absolute d-none" style="width: 18rem;">
+                <div class="card-body">
+                    <h6 class="card-title">Card title</h6>
+                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of
+                        the card's content.</p>
+
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">An item</li>
+                    <li class="list-group-item">A second item</li>
+                </ul>
+                <div class="card-body">
+                    <a href="#" class="card-link">Card link</a>
+                    <a href="#" class="card-link">Another link</a>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -56,14 +75,11 @@ export default {
         handleCanvasClick(event) {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
             const y = event.pageY - this.$refs.canvas.offsetTop;
-            console.log(x, y);
             const ctx = this.$refs.canvas.getContext("2d")
-            // .fillRect(x - 5, y - 5, 15, 15);
 
             const img = new Image();
             img.src = LocationMapIcon;
             img.onload = () => {
-                console.log("img");
                 ctx.drawImage(img, x - 15, y - 25, 30, 30);
             }
         },
@@ -74,26 +90,34 @@ export default {
             const ctx = this.$refs.canvas.getContext("2d")
 
             const imgClicked = new Image();
-            imgClicked.src = LocationToolbarIcon;
+            imgClicked.src = LocationMapIconClicked;
 
             const imgNotClicked = new Image();
             imgNotClicked.src = LocationMapIcon;
 
+            const card = document.querySelector('.card');
+            let isClickedOnPoint = false;
             // if any client clicked 20px around the point
-            this.markPoints.forEach(point => {
-                console.log(point.x, point.y);
-                console.log(x, y);
-                console.log("-------------");
-                // point is in the range of 20px
-                if (Math.abs(point.x - x) <= 30 && Math.abs(point.y - y) <= 30) {
-                    ctx.fillStyle = 'red';
-                    ctx.drawImage(imgClicked, point.x, point.y, 30, 30);
-                } else {
-                    ctx.fillStyle = 'blue';
-                    ctx.drawImage(imgNotClicked, point.x, point.y, 30, 30);
+            if (imgClicked.complete && imgNotClicked.complete) {
+                this.markPoints.forEach(point => {
+                    // point is in the range of 20px
+                    if (Math.abs(point.x - x) <= 30 && Math.abs(point.y - y) <= 30) {
+                        ctx.drawImage(imgClicked, point.x, point.y, 30, 30);
+                        // change the position of card html element
+                        card.style.left = `${parseInt(point.x) + 20}px`;
+                        card.style.top = `${parseInt(point.y) + 25}px`;
+                        // manupilate the card, html element's class
+                        card.classList.remove('d-none');
+                        isClickedOnPoint = true;
+                    } else {
+                        ctx.fillStyle = 'blue';
+                        ctx.drawImage(imgNotClicked, point.x, point.y, 30, 30);
+                    }
+                    if (!isClickedOnPoint)
+                        card.classList.add('d-none');
+                });
+            }
 
-                }
-            });
         },
         drawMarkPoints() {
             const canvas = this.$refs.canvas;
@@ -150,6 +174,11 @@ body {
     margin: 0;
     padding: 0;
     offset: 0;
+    position: relative;
+}
+
+.home-page {
+    z-index: auto;
 }
 </style>
 

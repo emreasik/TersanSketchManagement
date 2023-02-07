@@ -16,82 +16,69 @@ export default {
     },
     data() {
         return {
-            icons: [
-                {
-                    id: 1,
-                    path: CursorToolbarIcon,
-                    active: true
-                },
-                {
-                    id: 2,
-                    path: LocationToolbarIcon,
-                    active: false
-                }
-            ],
-            buildingDetails: {
+            icons: [],
+            buildingDetails: {},
+            markPoints: [],
+            isSketchMode: false,
+            serviceMarkPoints: [],
+            clickedPoint: {},
+            sketchImage : new Image(),
+            locationMapIcon : new Image(),
+            locationMapIconClicked : new Image(),
+        }
+    },
+    async created() {
+        //init
+        this.setInitialIcons();
+        this.setInitialBuildingDetails();
+        await this.setMarkPoints();
+        this.setInitialClickIcons();
+    },
+    mounted() {
+        this.setSketchImage();  
+    },
+    methods: {
+        async setMarkPoints() {
+            this.markPoints = (await buildingService.getBuildings()).data;
+            this.drawMarkPoints()
+        },
+        setSketchImage() {
+            this.sketchImage.src = new URL('../../assets/images/sketch.jpg', import.meta.url);
+
+            this.sketchImage.onload = () => {
+                this.sketchImage.height = (window.innerWidth / this.sketchImage.width) * this.sketchImage.height;
+                this.sketchImage.width = window.innerWidth;
+                this.drawCanvas(this.sketchImage);
+            };
+        },
+        setInitialBuildingDetails() {
+            this.buildingDetails = {
                 id: 0,
                 name: '',
                 x: 0,
                 y: 0,
                 sketchId: 1,
-            },
-            markPoints: [],
-            isSketchMode: false,
-            serviceMarkPoints: [],
-            clickedPoint: {}
-        }
-    },
-    async created() {
-        this.markPoints = await buildingService.getBuildings();
-        console.log(this.markPoints);
-
-        this.drawMarkPoints()
-    },
-    mounted() {
-        const image = new Image();
-        image.src = new URL('../../assets/images/sketch.jpg', import.meta.url);
-
-        image.onload = () => {
-            image.height = (window.innerWidth / image.width) * image.height;
-            image.width = window.innerWidth;
-            this.drawCanvas(image);
-        };
-    },
-    methods: {
+            }
+        },
+        setInitialClickIcons() {
+            this.locationMapIcon.src = LocationMapIcon;
+            this.locationMapIconClicked.src = LocationMapIconClicked;
+        },
         handleCanvasClick(event) {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
             const y = event.pageY - this.$refs.canvas.offsetTop;
-            const ctx = this.$refs.canvas.getContext("2d")
 
-            const img = new Image();
-            img.src = LocationMapIcon;
-
-            let myModal = new Modal(document.getElementById("exampleModal"), {});
-            myModal.show();
-
-            // img.onload = () => {
-            //     ctx.drawImage(img, x - 15, y - 25, 30, 30);
-            // }
+        this.openModal('exampleModal');
 
             this.buildingDetails.x = x - 15;
             this.buildingDetails.y = y - 25;
         },
-        updateNewBuilding() {
-            buildingService.updateBuilding(this.buildingDetails).then((data) => {
-                if (data.isCreated) {
-                    this.markPoints.push({
-                        id: data.id,
-                        name: data.name,
-                        x: data.x,
-                        y: data.y,
-                    });
-                    this.drawMarkPoints();
-                }
-            });
+        openModal(modalName) {
+            let myModal = new Modal(document.getElementById(modalName), {});
+            myModal.show();
         },
         openUpdateModal() {
-            let myModal = new Modal(document.getElementById("buildingUpdateModal"), {});
-            myModal.show();
+            this.openModal('buildingUpdateModal');
             this.updateBuildingVariables();
         },
         updateBuildingVariables() {
@@ -99,36 +86,35 @@ export default {
             this.buildingDetails.name = building.name;
             this.buildingDetails.x = building.x;
             this.buildingDetails.y = building.y;
-
-            console.log(this.buildingDetails);
         },
-        addNewBuilding() {
-            buildingService.addBuilding(this.buildingDetails).then((data) => {
-                if (data.isCreated) {
+        async addNewBuilding() {
+            let result = await buildingService.addBuilding(this.buildingDetails);
+            
+                if (!!result.isCreated) {
                     this.markPoints.push({
-                        id: data.id,
-                        name: data.name,
-                        x: this.buildingDetails.x,
-                        y: this.buildingDetails.y,
+                        id: result.id,
+                        name: result.name,
+                        x: result.x,
+                        y: result.y,
                     });
                     this.drawMarkPoints();
                     this.successToast();
                 }
-            });
         },
-        updateBuilding() {
-            buildingService.updateBuilding(this.buildingDetails).then((data) => {
-                if (data.isUpdated) {
-                    this.markPoints = this.markPoints.filter(point => point.id !== data.id);
+        async updateBuilding() {
+            let result = await buildingService.updateBuilding(this.buildingDetails)
+                if (!!result.isUpdated) {
+                    this.markPoints = this.markPoints.filter(point => point.id !== result.id);
                     this.markPoints.push({
-                        id: data.id,
-                        name: data.name,
-                        x: this.buildingDetails.x,
-                        y: this.buildingDetails.y,
+                        id: result.id,
+                        name: result.name,
+                        x: result.x,
+                        y: result.y,
                     });
-                    this.clickedPoint = data
+                    this.clickedPoint = result
+                    // draw gerekebilir eğer point değişirse
+                    //TODO: draw
                 }
-            });
         },
         handleCanvasCursor(event) {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
@@ -136,37 +122,27 @@ export default {
 
             const ctx = this.$refs.canvas.getContext("2d")
 
-            const imgClicked = new Image();
-            imgClicked.src = LocationMapIconClicked;
-
-            const imgNotClicked = new Image();
-            imgNotClicked.src = LocationMapIcon;
-
             const card = document.querySelector('.card');
             let isClickedOnPoint = false;
 
-            imgClicked.onload = () => {
-                imgNotClicked.onload = () => {
-                    this.markPoints.forEach(point => {
-                        if (Math.abs(point.x - x) <= 30 && Math.abs(point.y - y) <= 30) {
-                            ctx.drawImage(imgClicked, point.x, point.y, 30, 30);
-                            card.style.left = `${parseInt(point.x) + 20}px`;
-                            card.style.top = `${parseInt(point.y) + 25}px`;
-                            card.classList.remove('d-none');
-                            isClickedOnPoint = true;
-                            this.clickedPoint = point;
+            this.markPoints.forEach(point => {
+                if (Math.abs(point.x - x) <= 30 && Math.abs(point.y - y) <= 30) {
+                    ctx.drawImage(this.locationMapIconClicked, point.x, point.y, 30, 30);
+                    card.style.left = `${parseInt(point.x) + 20}px`;
+                    card.style.top = `${parseInt(point.y) + 25}px`;
+                    card.classList.remove('d-none');
+                    isClickedOnPoint = true;
+                    this.clickedPoint = point;
 
-                            // update building Id
-                            this.buildingDetails.id = point.id;
-                        } else {
-                            ctx.drawImage(imgNotClicked, point.x, point.y, 30, 30);
-                        }
-                        if (!isClickedOnPoint) {
-                            card.classList.add('d-none');
-                        }
-                    });
+                    // update building Id
+                    this.buildingDetails.id = point.id;
+                } else {
+                    ctx.drawImage(this.locationMapIcon, point.x, point.y, 30, 30);
                 }
-            }
+                if (!isClickedOnPoint) {
+                    card.classList.add('d-none');
+                }
+            });
         },
         drawMarkPoints() {
             const canvas = this.$refs.canvas;
@@ -207,11 +183,26 @@ export default {
             }
         },
         successToast() {
-            ElNotification(toastMessages.SUCCCESS_TR('Bina'))
+            ElNotification(toastMessages.SUCCCESS('Bina'))
         },
         errorToast() {
-            ElNotification(toastMessages.ERROR_TR('Bina'))
-        }
+            ElNotification(toastMessages.ERROR('Bina'))
+        },
+        setInitialIcons() {
+            this.icons = [
+                {
+                    id: 1,
+                    path: CursorToolbarIcon,
+                    active: true
+                },
+                {
+                    id: 2,
+                    path: LocationToolbarIcon,
+                    active: false
+                }
+            ];
+        },
+        
     }
 }
 </script>

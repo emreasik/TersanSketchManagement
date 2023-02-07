@@ -1,29 +1,27 @@
-const SUCCCESS_TR = (messageType) => {
-    return {
+const SUCCCESS = (messageType) => {
+    return import.meta.env.VITE_APP_LANG === 'TR' ?
+    {
         title: 'Başarılı',
         message: `Yeni ${messageType} başarıyla eklendi`,
         type: 'success'
     }
-}
-
-const SUCCCESS_EN = (messageType) => {
-    return {
+    :
+    {
         title: 'Success',
         message: `New ${messageType} added successfully`,
         type: 'success'
     }
 }
 
-const ERROR_TR = (messageType) => {
-    return {
+const ERROR = (messageType) => {
+    return import.meta.env.VITE_APP_LANG === 'TR' ?
+    {
         title: 'Hata',
-        message: `${messageType} eklenirken bir hata oluştu`,
+        message: `Yeni ${messageType} eklenirken bir hata oluştu`,
         type: 'error'
     }
-}
-
-const ERROR_EN = (messageType) => {
-    return {
+    :
+    {
         title: 'Error',
         message: `An error occurred while adding ${messageType}`,
         type: 'error'
@@ -32,10 +30,8 @@ const ERROR_EN = (messageType) => {
 
 
 const toastMessages = {
-    SUCCCESS_TR,
-    SUCCCESS_EN,
-    ERROR_TR,
-    ERROR_EN
+    SUCCCESS,
+    ERROR
 }
 
 export default toastMessages;

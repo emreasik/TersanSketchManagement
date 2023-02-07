@@ -5,6 +5,9 @@ import CursorToolbarIcon from '../../assets/icons/cursor_icon.png';
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
 import LocationMapIconClicked from '../../assets/icons/location_map_icon_clicked.png';
 import { buildingService } from '../../services/ApiService.js';
+import { Modal } from 'bootstrap'
+import { ElNotification } from 'element-plus'
+import toastMessages from '../../helpers/toastConstants.js'
 
 export default {
     name: 'HomePage',
@@ -26,7 +29,8 @@ export default {
                 }
             ],
             buildingDetails: {
-                name: 'Depo',
+                id: 0,
+                name: '',
                 x: 0,
                 y: 0,
                 sketchId: 1,
@@ -34,6 +38,7 @@ export default {
             markPoints: [],
             isSketchMode: false,
             serviceMarkPoints: [],
+            clickedPoint: {}
         }
     },
     async created() {
@@ -60,12 +65,70 @@ export default {
 
             const img = new Image();
             img.src = LocationMapIcon;
-            img.onload = () => {
-                ctx.drawImage(img, x - 15, y - 25, 30, 30);
-            }
+
+            let myModal = new Modal(document.getElementById("exampleModal"), {});
+            myModal.show();
+
+            // img.onload = () => {
+            //     ctx.drawImage(img, x - 15, y - 25, 30, 30);
+            // }
+
             this.buildingDetails.x = x - 15;
             this.buildingDetails.y = y - 25;
-            buildingService.addBuilding(this.buildingDetails);
+        },
+        updateNewBuilding() {
+            buildingService.updateBuilding(this.buildingDetails).then((data) => {
+                if (data.isCreated) {
+                    this.markPoints.push({
+                        id: data.id,
+                        name: data.name,
+                        x: data.x,
+                        y: data.y,
+                    });
+                    this.drawMarkPoints();
+                }
+            });
+        },
+        openUpdateModal() {
+            let myModal = new Modal(document.getElementById("buildingUpdateModal"), {});
+            myModal.show();
+            this.updateBuildingVariables();
+        },
+        updateBuildingVariables() {
+            const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
+            this.buildingDetails.name = building.name;
+            this.buildingDetails.x = building.x;
+            this.buildingDetails.y = building.y;
+
+            console.log(this.buildingDetails);
+        },
+        addNewBuilding() {
+            buildingService.addBuilding(this.buildingDetails).then((data) => {
+                if (data.isCreated) {
+                    this.markPoints.push({
+                        id: data.id,
+                        name: data.name,
+                        x: this.buildingDetails.x,
+                        y: this.buildingDetails.y,
+                    });
+                    this.drawMarkPoints();
+                    this.successToast();
+                }
+            });
+        },
+        updateBuilding() {
+            buildingService.updateBuilding(this.buildingDetails).then((data) => {
+                if (data.isUpdated) {
+                    this.markPoints = this.markPoints.filter(point => point.id !== data.id);
+                    this.markPoints.push({
+                        id: data.id,
+                        name: data.name,
+                        x: this.buildingDetails.x,
+                        y: this.buildingDetails.y,
+                    });
+                    this.clickedPoint = data
+                }
+            });
         },
         handleCanvasCursor(event) {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
@@ -91,6 +154,10 @@ export default {
                             card.style.top = `${parseInt(point.y) + 25}px`;
                             card.classList.remove('d-none');
                             isClickedOnPoint = true;
+                            this.clickedPoint = point;
+
+                            // update building Id
+                            this.buildingDetails.id = point.id;
                         } else {
                             ctx.drawImage(imgNotClicked, point.x, point.y, 30, 30);
                         }
@@ -100,12 +167,10 @@ export default {
                     });
                 }
             }
-
         },
         drawMarkPoints() {
             const canvas = this.$refs.canvas;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'blue';
 
             const img = new Image();
             img.src = LocationMapIcon;
@@ -140,6 +205,12 @@ export default {
             } else {
                 this.isSketchMode = false;
             }
+        },
+        successToast() {
+            ElNotification(toastMessages.SUCCCESS_TR('Bina'))
+        },
+        errorToast() {
+            ElNotification(toastMessages.ERROR_TR('Bina'))
         }
     }
 }
@@ -154,7 +225,7 @@ export default {
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">
-                <h6 class="custom-card__tag">Building</h6>
+                <h6 class="custom-card__tag">{{ clickedPoint.name }}</h6>
                 <div class="card-body">
                     <p class="card-text">Some quick example text to build on the card title and make up the bulk of
                         the card's content.</p>
@@ -164,8 +235,88 @@ export default {
                     <li class="list-group-item">A second item</li>
                 </ul>
                 <div class="card-body d-flex justify-content-center">
-                    <a href="#" class="card-link custom-card__link">Düzenle</a>
-                    <a href="#" class="card-link custom-card__link">Kroki</a>
+                    <button class="card-link custom-card__link" @click="openUpdateModal">Düzenle</button>
+                    <button class="card-link custom-card__link">Kroki</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add Building Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-main-color">
+                    <h5 class="modal-title text-white" id="exampleModalLabel">Yeni Bina Ekle</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="recipient-name" class="col-form-label">Bina Adı</label>
+                            <input type="text" class="form-control" id="recipient-name" v-model="buildingDetails.name">
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex gap-3">
+                                <div class="d-flex input-group flex-nowrap">
+                                    <span class="input-group-text " id="addon-wrapping">X</span>
+                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.x"
+                                        aria-label="Username" aria-describedby="addon-wrapping">
+                                </div>
+                                <div class="d-flex input-group flex-nowrap">
+                                    <span class="input-group-text" id="addon-wrapping">Y</span>
+                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.y"
+                                        aria-label="Username" aria-describedby="addon-wrapping">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn bg-main-color text-white" @click="addNewBuilding"
+                        data-bs-dismiss="modal">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Building Modal -->
+    <div class="modal fade" id="buildingUpdateModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-main-color">
+                    <h5 class="modal-title text-white" id="exampleModalLabel">Bina Düzenle</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="recipient-name" class="col-form-label">Bina Adı</label>
+                            <input type="text" class="form-control" id="recipient-name" v-model="buildingDetails.name">
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex gap-3">
+                                <div class="d-flex input-group flex-nowrap">
+                                    <span class="input-group-text " id="addon-wrapping">X</span>
+                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.x"
+                                        aria-label="Username" aria-describedby="addon-wrapping">
+                                </div>
+                                <div class="d-flex input-group flex-nowrap">
+                                    <span class="input-group-text" id="addon-wrapping">Y</span>
+                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.y"
+                                        aria-label="Username" aria-describedby="addon-wrapping">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn bg-main-color text-white" @click="updateBuilding"
+                        data-bs-dismiss="modal">Kaydet</button>
                 </div>
             </div>
         </div>
@@ -183,6 +334,10 @@ body {
 .animate__fadeIn {
     --animate-duration: 200ms;
     --animate-delay: 0.1s;
+}
+
+.bg-main-color {
+    background-color: v.$tersan-main-color !important;
 }
 
 #canvas {

@@ -18,6 +18,7 @@ export default {
         return {
             icons: [],
             buildingDetails: {},
+            buildingDetailsForUpdate: {},
             markPoints: [],
             isSketchMode: false,
             serviceMarkPoints: [],
@@ -87,9 +88,10 @@ export default {
         },
         updateBuildingVariables() {
             const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
-            this.buildingDetails.name = building.name;
-            this.buildingDetails.x = building.x;
-            this.buildingDetails.y = building.y;
+            this.buildingDetailsForUpdate.id = building.id;
+            this.buildingDetailsForUpdate.name = building.name;
+            this.buildingDetailsForUpdate.x = building.x;
+            this.buildingDetailsForUpdate.y = building.y;
         },
         async addNewBuilding() {
             let result = await buildingService.addBuilding(this.buildingDetails);
@@ -101,13 +103,14 @@ export default {
                     y: result.y,
                 });
                 this.drawMarkPoints();
+                this.buildingDetails = {};
                 this.successToastAdd('Bina');
             } else {
                 this.errorToastAdd('Bina');
             }
         },
         async updateBuilding() {
-            let result = await buildingService.updateBuilding(this.buildingDetails)
+            let result = await buildingService.updateBuilding(this.buildingDetailsForUpdate)
             if (!!result.isUpdated) {
                 console.log(typeof result.isUpdated);
                 this.markPoints = this.markPoints.filter(point => point.id !== result.id);
@@ -119,6 +122,7 @@ export default {
                 });
                 this.clickedPoint = result;
 
+                this.buildingDetailsForUpdate = {};
                 this.closeCard();
                 this.canvasRefresh();
                 this.successToastUpdate('Bina');
@@ -324,18 +328,18 @@ export default {
                     <form>
                         <div class="mb-3">
                             <label for="recipient-name" class="col-form-label">Bina Adı</label>
-                            <input type="text" class="form-control" id="recipient-name" v-model="buildingDetails.name">
+                            <input type="text" class="form-control" id="recipient-name" v-model="buildingDetailsForUpdate.name">
                         </div>
                         <div class="mb-3">
                             <div class="d-flex gap-3">
                                 <div class="d-flex input-group flex-nowrap">
                                     <span class="input-group-text " id="addon-wrapping">X</span>
-                                    <input type="text" class="form-control shadow-none" v-model="buildingDetails.x"
+                                    <input type="text" class="form-control shadow-none" v-model="buildingDetailsForUpdate.x"
                                         aria-label="Username" aria-describedby="addon-wrapping">
                                 </div>
                                 <div class="d-flex input-group flex-nowrap">
                                     <span class="input-group-text" id="addon-wrapping">Y</span>
-                                    <input type="text" class="form-control shadow-none" v-model="buildingDetails.y"
+                                    <input type="text" class="form-control shadow-none" v-model="buildingDetailsForUpdate.y"
                                         aria-label="Username" aria-describedby="addon-wrapping">
                                 </div>
                             </div>

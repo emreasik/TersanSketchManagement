@@ -8,11 +8,13 @@ import { buildingService } from '../../services/ApiService.js';
 import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
+import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
 
 export default {
     name: 'HomePage',
     components: {
         Toolbar,
+        SketchMarkerIcon
     },
     data() {
         return {
@@ -26,6 +28,7 @@ export default {
             sketchImage: new Image(),
             locationMapIcon: new Image(),
             locationMapIconClicked: new Image(),
+            markerColor: "#E74C3C",
         }
     },
     async created() {
@@ -303,6 +306,16 @@ export default {
                                 </div>
                             </div>
                         </div>
+                        <div class="svg-color-container">
+                            <div class="svg-color-container__marker">
+                                <SketchMarkerIcon :svgColor="markerColor"
+                                    className="svg-color-container__marker__component" />
+                            </div>
+                            <div class="svg-color-container__picker">
+                                <input class="svg-color-container__picker__input" v-model="markerColor" type="color"
+                                    id="favcolor" name="favcolor" />
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -328,19 +341,22 @@ export default {
                     <form>
                         <div class="mb-3">
                             <label for="recipient-name" class="col-form-label">Bina Adı</label>
-                            <input type="text" class="form-control" id="recipient-name" v-model="buildingDetailsForUpdate.name">
+                            <input type="text" class="form-control" id="recipient-name"
+                                v-model="buildingDetailsForUpdate.name">
                         </div>
                         <div class="mb-3">
                             <div class="d-flex gap-3">
                                 <div class="d-flex input-group flex-nowrap">
                                     <span class="input-group-text " id="addon-wrapping">X</span>
-                                    <input type="text" class="form-control shadow-none" v-model="buildingDetailsForUpdate.x"
-                                        aria-label="Username" aria-describedby="addon-wrapping">
+                                    <input type="text" class="form-control shadow-none"
+                                        v-model="buildingDetailsForUpdate.x" aria-label="Username"
+                                        aria-describedby="addon-wrapping">
                                 </div>
                                 <div class="d-flex input-group flex-nowrap">
                                     <span class="input-group-text" id="addon-wrapping">Y</span>
-                                    <input type="text" class="form-control shadow-none" v-model="buildingDetailsForUpdate.y"
-                                        aria-label="Username" aria-describedby="addon-wrapping">
+                                    <input type="text" class="form-control shadow-none"
+                                        v-model="buildingDetailsForUpdate.y" aria-label="Username"
+                                        aria-describedby="addon-wrapping">
                                 </div>
                             </div>
                         </div>
@@ -419,6 +435,38 @@ body {
         &:hover {
             color: v.$main-color-hover;
             background-color: v.$btn-toolbar-active-bg-color;
+        }
+    }
+}
+
+.svg-color-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    background-color: #faf5f5;
+    padding: 5px;
+
+    &__marker {
+        width: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        &__component {
+            width: 100px;
+            height: 100px;
+        }
+    }
+
+    &__picker {
+        width: 50%;
+        display: flex;
+        justify-content: flex-start;
+
+        &__input {
+            width: 60px;
+            height: 50px;
         }
     }
 }

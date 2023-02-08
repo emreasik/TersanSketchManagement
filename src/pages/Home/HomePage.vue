@@ -22,9 +22,9 @@ export default {
             isSketchMode: false,
             serviceMarkPoints: [],
             clickedPoint: {},
-            sketchImage : new Image(),
-            locationMapIcon : new Image(),
-            locationMapIconClicked : new Image(),
+            sketchImage: new Image(),
+            locationMapIcon: new Image(),
+            locationMapIconClicked: new Image(),
         }
     },
     async created() {
@@ -35,7 +35,7 @@ export default {
         this.setInitialClickIcons();
     },
     mounted() {
-        this.setSketchImage();  
+        this.setSketchImage();
     },
     methods: {
         async setMarkPoints() {
@@ -68,7 +68,7 @@ export default {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
             const y = event.pageY - this.$refs.canvas.offsetTop;
 
-        this.openModal('exampleModal');
+            this.openModal('exampleModal');
 
             this.buildingDetails.x = x - 15;
             this.buildingDetails.y = y - 25;
@@ -76,6 +76,10 @@ export default {
         openModal(modalName) {
             let myModal = new Modal(document.getElementById(modalName), {});
             myModal.show();
+        },
+        closeCard() {
+            const card = document.querySelector('.card');
+            card.classList.add('d-none');
         },
         openUpdateModal() {
             this.openModal('buildingUpdateModal');
@@ -89,32 +93,54 @@ export default {
         },
         async addNewBuilding() {
             let result = await buildingService.addBuilding(this.buildingDetails);
-            
-                if (!!result.isCreated) {
-                    this.markPoints.push({
-                        id: result.id,
-                        name: result.name,
-                        x: result.x,
-                        y: result.y,
-                    });
-                    this.drawMarkPoints();
-                    this.successToast();
-                }
+            if (!!result.isCreated) {
+                this.markPoints.push({
+                    id: result.id,
+                    name: result.name,
+                    x: result.x,
+                    y: result.y,
+                });
+                this.drawMarkPoints();
+                this.successToastAdd('Bina');
+            } else {
+                this.errorToastAdd('Bina');
+            }
         },
         async updateBuilding() {
             let result = await buildingService.updateBuilding(this.buildingDetails)
-                if (!!result.isUpdated) {
-                    this.markPoints = this.markPoints.filter(point => point.id !== result.id);
-                    this.markPoints.push({
-                        id: result.id,
-                        name: result.name,
-                        x: result.x,
-                        y: result.y,
-                    });
-                    this.clickedPoint = result
-                    // draw gerekebilir eğer point değişirse
-                    //TODO: draw
-                }
+            if (!!result.isUpdated) {
+                console.log(typeof result.isUpdated);
+                this.markPoints = this.markPoints.filter(point => point.id !== result.id);
+                this.markPoints.push({
+                    id: result.id,
+                    name: result.name,
+                    x: result.x,
+                    y: result.y,
+                });
+                this.clickedPoint = result;
+
+                this.closeCard();
+                this.canvasRefresh();
+                this.successToastUpdate('Bina');
+            } else {
+                this.errorToastUpdate('Bina');
+            }
+        },
+        canvasRefresh() {
+            console.log(this.markPoints);
+            this.drawCanvas(this.sketchImage);
+            this.drawMarkPoints();
+        },
+        async deleteBuilding() {
+            let result = await buildingService.deleteBuilding(this.buildingDetails.id);
+            if (result.isDeleted) {
+                this.markPoints = this.markPoints.filter(point => point.id !== result.id);
+                this.closeCard();
+                this.canvasRefresh();
+                this.successToastDelete('Bina');
+            } else {
+                this.errorToastDelete('Bina');
+            }
         },
         handleCanvasCursor(event) {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
@@ -182,11 +208,23 @@ export default {
                 this.isSketchMode = false;
             }
         },
-        successToast() {
-            ElNotification(toastMessages.SUCCCESS('Bina'))
+        successToastAdd(constructorType) {
+            ElNotification(toastMessages.SUCCCESS_ADD(constructorType))
         },
-        errorToast() {
-            ElNotification(toastMessages.ERROR('Bina'))
+        successToastUpdate(constructorType) {
+            ElNotification(toastMessages.SUCCCESS_UPDATE(constructorType))
+        },
+        successToastDelete(constructorType) {
+            ElNotification(toastMessages.SUCCCESS_DELETE(constructorType))
+        },
+        errorToastAdd(constructorType) {
+            ElNotification(toastMessages.ERROR_ADD(constructorType))
+        },
+        errorToastDelete(constructorType) {
+            ElNotification(toastMessages.ERROR_DELETE(constructorType))
+        },
+        errorToastUpdate(constructorType) {
+            ElNotification(toastMessages.ERROR_UPDATE(constructorType))
         },
         setInitialIcons() {
             this.icons = [
@@ -202,7 +240,7 @@ export default {
                 }
             ];
         },
-        
+
     }
 }
 </script>
@@ -292,22 +330,26 @@ export default {
                             <div class="d-flex gap-3">
                                 <div class="d-flex input-group flex-nowrap">
                                     <span class="input-group-text " id="addon-wrapping">X</span>
-                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.x"
+                                    <input type="text" class="form-control shadow-none" v-model="buildingDetails.x"
                                         aria-label="Username" aria-describedby="addon-wrapping">
                                 </div>
                                 <div class="d-flex input-group flex-nowrap">
                                     <span class="input-group-text" id="addon-wrapping">Y</span>
-                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.y"
+                                    <input type="text" class="form-control shadow-none" v-model="buildingDetails.y"
                                         aria-label="Username" aria-describedby="addon-wrapping">
                                 </div>
                             </div>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn bg-main-color text-white" @click="updateBuilding"
-                        data-bs-dismiss="modal">Kaydet</button>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                        @click="deleteBuilding">Sil</button>
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="button" class="btn bg-main-color text-white" @click="updateBuilding"
+                            data-bs-dismiss="modal">Kaydet</button>
+                    </div>
                 </div>
             </div>
         </div>

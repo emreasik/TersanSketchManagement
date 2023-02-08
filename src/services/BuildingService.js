@@ -30,4 +30,13 @@ export default class BuildingService {
 
         return result.data;
     }
+    async deleteBuilding(buildingId) {
+        console.log(buildingId);
+        let result = await this.fetcher.delete("/Building", {
+            params: {
+                id: buildingId
+            }
+        });
+        return result.data;
+    }
 }

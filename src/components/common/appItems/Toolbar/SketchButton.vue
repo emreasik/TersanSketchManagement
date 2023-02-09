@@ -1,43 +1,35 @@
 <template>
-    <div class="tool-button__container" :class="{ active: isActive }" @click="$emit('toolButtonClicked', icon.id)">
-        <div class="tool-button__container__button">
-            <img :src="icon.path" alt="cursor">
+    <div class="tool-button__sketch-container">
+        <div class="tool-button__sketch-container__button">
+            <img :src="sketchIcon.path" alt="cursor">
         </div>
     </div>
 </template>
 
 <script>
 export default {
-    name: 'ToolButton',
+    name: 'SketchButton',
     props: {
-        icon: {
+        sketchIcon: {
             type: String,
             required: true
-        },
-        isActive: {
-            type: Boolean,
-            default: false
         }
-    },
+    }
 }
 </script>
 
 <style lang="scss">
 @use '../../../../assets/variables' as v;
 
-.active {
-    background: v.$btn-toolbar-active-bg-color !important;
-    box-shadow: -3px 3px 8px -1px v.$btn-toolbar-active-bg-color !important;
-}
-
-
-.tool-button__container {
+.tool-button__sketch-container {
     box-shadow: -3px 3px 8px -1px rgba(20, 77, 129, 1);
     background: v.$btn-toolbar-bg-color;
     border-radius: 50%;
     width: 60px;
-    height: 60px;
+    height: 0px;
     cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
 
     &__button {
         display: flex;

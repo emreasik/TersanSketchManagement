@@ -1,7 +1,11 @@
 <script>
 import Toolbar from '../../components/common/appItems/Toolbar/Toolbar.vue'
-import LocationToolbarIcon from '../../assets/icons/location_marker_icon.png';
-import CursorToolbarIcon from '../../assets/icons/cursor_icon.png';
+import ToolbarLocationIcon from '../../assets/icons/location_marker_icon.png';
+import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
+import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
+import ToolbarAddIcon from '../../assets/icons/add_icon.png';
+import ToolbarListIcon from '../../assets/icons/list_icon.png';
+
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
 import LocationMapIconClicked from '../../assets/icons/location_map_icon_clicked.png';
 import { buildingService } from '../../services/ApiService.js';
@@ -19,6 +23,7 @@ export default {
     data() {
         return {
             icons: [],
+            sketchIcons: [],
             buildingDetails: {},
             buildingDetailsForUpdate: {},
             markPoints: [],
@@ -34,6 +39,7 @@ export default {
     async created() {
         //init
         this.setInitialIcons();
+        this.setInitialSketchIcons();
         this.setInitialBuildingDetails();
         await this.setMarkPoints();
         this.setInitialClickIcons();
@@ -237,24 +243,40 @@ export default {
             this.icons = [
                 {
                     id: 1,
-                    path: CursorToolbarIcon,
+                    path: ToolbarCursorIcon,
                     active: true
                 },
                 {
                     id: 2,
-                    path: LocationToolbarIcon,
+                    path: ToolbarLocationIcon,
                     active: false
+                },
+                {
+                    id: 3,
+                    path: ToolbarSketchIcon,
+                    active: false,
                 }
             ];
         },
-
+        setInitialSketchIcons() {
+            this.sketchIcons = [
+                {
+                    id: 1,
+                    path: ToolbarAddIcon,
+                },
+                {
+                    id: 2,
+                    path: ToolbarListIcon,
+                }
+            ];
+        },
     }
 }
 </script>
 
 <template>
     <div class="home-page">
-        <Toolbar :icons="icons" @tool-button-clicked="setToolButtonActive" />
+        <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative">
             <canvas class="position-absolute" ref="canvas"
                 v-on="isSketchMode ? { click: handleCanvasClick } : { click: handleCanvasCursor }">

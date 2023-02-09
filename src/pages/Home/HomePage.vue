@@ -10,11 +10,15 @@ import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
 
+import Vue3TabsChrome from 'vue3-tabs-chrome'
+import 'vue3-tabs-chrome/dist/vue3-tabs-chrome.css'
+
 export default {
     name: 'HomePage',
     components: {
         Toolbar,
-        SketchMarkerIcon
+        SketchMarkerIcon,
+        Vue3TabsChrome
     },
     data() {
         return {
@@ -29,6 +33,30 @@ export default {
             locationMapIcon: new Image(),
             locationMapIconClicked: new Image(),
             markerColor: "#E74C3C",
+
+            // Chrome Tabs
+            tabRef: null,
+            tab: 'google',
+            tabs: [
+                {
+                    label: 'google',
+                    key: 'google',
+                    closable: false,
+                    favicon: '../../assets/icons/cursor_icon.png'
+                },
+                {
+                    label: 'facebook',
+                    key: 'facebook',
+                    favicon: '../../assets/icons/cursor_icon.png'
+                },
+                {
+                    label: 'New Tab',
+                    key: 'any-string-key',
+                    favicon: (h, { tab, index }) => {
+                        return h('span', tab.label)
+                    }
+                }
+            ]
         }
     },
     async created() {
@@ -42,6 +70,22 @@ export default {
         this.setSketchImage();
     },
     methods: {
+        // Chrome Tabs Methods
+        setTabRef(el) {
+            this.tabRef = el
+        },
+        handleAdd() {
+            const key = 'tab' + Date.now()
+            this.tabRef.addTab({
+                label: 'New Tab',
+                key
+            })
+            this.tab = key
+        },
+        handleRemove() {
+            this.tabRef.removeTab(this.tab)
+        },
+        ///////////////////////
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
             this.drawMarkPoints()
@@ -254,6 +298,12 @@ export default {
 
 <template>
     <div class="home-page">
+        <vue3-tabs-chrome :ref="setTabRef" :tabs="tabs" v-model="tab">
+            <template v-slot:after>
+                <button class="btn" style="height: 20px; line-height: 20px; padding: 0 10px; margin-left: 0px;"
+                    @click="handleAdd">+</button>
+            </template>
+        </vue3-tabs-chrome>
         <Toolbar :icons="icons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative">
             <canvas class="position-absolute" ref="canvas"
@@ -381,7 +431,6 @@ export default {
 
 body {
     margin: 0;
-    overflow-x: hidden;
 }
 
 .animate__fadeIn {

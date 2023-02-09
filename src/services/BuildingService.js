@@ -2,30 +2,44 @@ export default class BuildingService {
     constructor(fetcher) {
         this.fetcher = fetcher;
     }
-    async getBuildings() {
+    //Todo: metodu kullanan yerlere window size ekle
+    async getBuildings(sketchId,windowSize) {
+        console.log(windowSize);
         let result = await this.fetcher.post("/Building/GetSummary", {
             pageSize: 100,
-            pageNumber: 1,
-            sketchId: 1
+            pageIndex: 0,
+            sketchId: 4,
+            windowHeight: windowSize.windowHeight,
+            windowWidth: windowSize.windowWidth
         });
+        console.log(result.data);
         return result.data;
     }
-    async addBuilding(buildingData) {
+    //TODO: buildinge window size ekle
+    async addBuilding(buildingData, windowSize) {
+        console.log(buildingData);
+        console.log(windowSize);
         let result = await this.fetcher.post("/Building", {
             name: buildingData.name,
             x: buildingData.x,
             y: buildingData.y,
             sketchId: buildingData.sketchId,
+            windowWidth: windowSize.windowWidth,
+            windowHeight: windowSize.windowHeight
         });
-
+        console.log(result.data);
         return result.data;
     }
-    async updateBuilding(updateBuildingData) {
+
+    async updateBuilding(updateBuildingData, windowSize) {
         let result = await this.fetcher.put("/Building", {
             id: updateBuildingData.id,
             name: updateBuildingData.name,
             x: updateBuildingData.x,
             y: updateBuildingData.y,
+            windowHeight: windowSize.windowHeight,
+            windowWidth: windowSize.windowWidth
+
         });
 
         return result.data;

@@ -31,29 +31,41 @@ export default {
             markerColor: "#E74C3C",
         }
     },
-    async created() {
+    created() {
         //init
         this.setInitialIcons();
         this.setInitialBuildingDetails();
-        await this.setMarkPoints();
         this.setInitialClickIcons();
     },
-    mounted() {
-        this.setSketchImage();
+    async mounted() {
+        await this.setSketchImage();
+        await this.setMarkPoints();
+
     },
     methods: {
         async setMarkPoints() {
-            this.markPoints = (await buildingService.getBuildings()).data;
+            this.markPoints = (await buildingService.getBuildings(3,this.getWindowSize())).data;
             this.drawMarkPoints()
+        },
+        getWindowSize() {
+            return {
+                windowWidth:this.sketchImage.width,
+                windowHeight: this.sketchImage.height
+            };
         },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch.jpg', import.meta.url);
 
-            this.sketchImage.onload = () => {
-                this.sketchImage.height = (window.innerWidth / this.sketchImage.width) * this.sketchImage.height;
+            //return onload as promise
+            return new Promise((resolve, reject) => {
+                this.sketchImage.onload = () => {
+                    this.sketchImage.height = (window.innerWidth / this.sketchImage.width) * this.sketchImage.height;
                 this.sketchImage.width = window.innerWidth;
                 this.drawCanvas(this.sketchImage);
-            };
+                    resolve();
+                }
+            });
+                
         },
         setInitialBuildingDetails() {
             this.buildingDetails = {
@@ -61,7 +73,7 @@ export default {
                 name: '',
                 x: 0,
                 y: 0,
-                sketchId: 1,
+                sketchId: 4,
             }
         },
         setInitialClickIcons() {
@@ -97,7 +109,7 @@ export default {
             this.buildingDetailsForUpdate.y = building.y;
         },
         async addNewBuilding() {
-            let result = await buildingService.addBuilding(this.buildingDetails);
+            let result = await buildingService.addBuilding(this.buildingDetails, this.getWindowSize());
             if (!!result.isCreated) {
                 this.markPoints.push({
                     id: result.id,

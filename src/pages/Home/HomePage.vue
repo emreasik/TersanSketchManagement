@@ -39,6 +39,12 @@ export default {
                     x: 0,
                     y: 0
                 },
+                colors : {
+                    circleColor: "#E74C3C",
+                    lineColor: "#E74C3C",
+                    borderColor: "#000000",
+                },
+                pointHistory: [],
             },
             serviceMarkPoints: [],
             clickedPoint: {},
@@ -46,6 +52,8 @@ export default {
             locationMapIcon: new Image(),
             locationMapIconClicked: new Image(),
             markerColor: "#E74C3C",
+            
+
            
         }
     },
@@ -63,17 +71,44 @@ export default {
     },
     methods: {
         handleClickDrawMode(event) {
+            let history = this.DrawMode.pointHistory;
+            let circleFound = false;
+            
+            history.forEach((point) => {
+                // ctrl pressed
+                if  (Math.abs(point.x - (event.pageX - this.$refs.canvas.offsetLeft)) < 20 && Math.abs(point.y - (event.pageY - this.$refs.canvas.offsetTop)) < 20
+                && event.ctrlKey
+                ) {
+                    this.DrawMode.previosDrawPoint.x = point.x;
+                    this.DrawMode.previosDrawPoint.y = point.y;
+                    circleFound = true;
+                }
+                else if (Math.abs(point.x - (event.pageX - this.$refs.canvas.offsetLeft)) < 20 && Math.abs(point.y - (event.pageY - this.$refs.canvas.offsetTop)) < 20) {
+                    this.DrawMode.isDrawMode = true;
+                    this.DrawMode.previosDrawPoint.x = 0;
+                    this.DrawMode.previosDrawPoint.y = 0;
+                    this.DrawMode.currentDrawPoint.x = point.x;
+                    this.DrawMode.currentDrawPoint.y = point.y;
+                    circleFound = true;
+                    return;
+                }
+            })
+            let colors = this.DrawMode.colors;
             if(this.DrawMode.currentDrawPoint != null) {
                 this.DrawMode.previosDrawPoint.x = this.DrawMode.currentDrawPoint.x;
                 this.DrawMode.previosDrawPoint.y = this.DrawMode.currentDrawPoint.y;
             }
             this.DrawMode.currentDrawPoint.x = event.pageX - this.$refs.canvas.offsetLeft;
             this.DrawMode.currentDrawPoint.y = event.pageY - this.$refs.canvas.offsetTop;
-            
+
+            if(!circleFound){
+                this.drawCirleAndFill(event.pageX - this.$refs.canvas.offsetLeft, event.pageY - this.$refs.canvas.offsetTop, colors.circleColor,colors.borderColor,2);
+                this.DrawMode.pointHistory.push({x: event.pageX - this.$refs.canvas.offsetLeft, y: event.pageY - this.$refs.canvas.offsetTop});
+            }
             if(this.DrawMode.previosDrawPoint != null && this.DrawMode.previosDrawPoint.x != 0 && this.DrawMode.previosDrawPoint.y != 0
                 && this.DrawMode.currentDrawPoint != null && this.DrawMode.currentDrawPoint.x != 0 && this.DrawMode.currentDrawPoint.y != 0
             )
-            this.drawLine(this.DrawMode.previosDrawPoint.x, this.DrawMode.previosDrawPoint.y, this.DrawMode.currentDrawPoint.x, this.DrawMode.currentDrawPoint.y, this.markerColor, 10);
+            this.drawLine(this.DrawMode.previosDrawPoint.x, this.DrawMode.previosDrawPoint.y, this.DrawMode.currentDrawPoint.x, this.DrawMode.currentDrawPoint.y, this.markerColor, 3);
         },
 
         handleMouseMoveForDrawing(event) {
@@ -82,6 +117,18 @@ export default {
                 const x = event.pageX - this.$refs.canvas.offsetLeft;
                 const y = event.pageY - this.$refs.canvas.offsetTop;
             }
+        },
+
+        drawCirleAndFill(x, y, color,strokeColor,width) {
+            const canvas = this.$refs.canvas;
+            const ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.lineWidth = width;
+            ctx.strokeStyle = strokeColor;
+            ctx.stroke();
         },
 
         drawLine(x1, y1, x2, y2, color, width) {

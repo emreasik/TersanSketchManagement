@@ -5,6 +5,7 @@ import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
 import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
 import ToolbarAddIcon from '../../assets/icons/add_icon.png';
 import ToolbarListIcon from '../../assets/icons/list_icon.png';
+import ToolBarCreateRestrictionIcon from '../../assets/icons/create_restriction_icon.png';
 
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
 import LocationMapIconClicked from '../../assets/icons/location_map_icon_clicked.png';
@@ -28,12 +29,24 @@ export default {
             buildingDetailsForUpdate: {},
             markPoints: [],
             isSketchMode: false,
+            DrawMode: {
+                isDrawMode: false,
+                previosDrawPoint: {
+                    x: 0,
+                    y: 0
+                },
+                currentDrawPoint: {
+                    x: 0,
+                    y: 0
+                },
+            },
             serviceMarkPoints: [],
             clickedPoint: {},
             sketchImage: new Image(),
             locationMapIcon: new Image(),
             locationMapIconClicked: new Image(),
             markerColor: "#E74C3C",
+           
         }
     },
     async created() {
@@ -44,22 +57,64 @@ export default {
         await this.setMarkPoints();
         this.setInitialClickIcons();
     },
-    mounted() {
-        this.setSketchImage();
+    async mounted() {
+        await this.setSketchImage();
+
     },
     methods: {
+        handleClickDrawMode(event) {
+            if(this.DrawMode.currentDrawPoint != null) {
+                this.DrawMode.previosDrawPoint.x = this.DrawMode.currentDrawPoint.x;
+                this.DrawMode.previosDrawPoint.y = this.DrawMode.currentDrawPoint.y;
+            }
+            this.DrawMode.currentDrawPoint.x = event.pageX - this.$refs.canvas.offsetLeft;
+            this.DrawMode.currentDrawPoint.y = event.pageY - this.$refs.canvas.offsetTop;
+            
+            if(this.DrawMode.previosDrawPoint != null && this.DrawMode.previosDrawPoint.x != 0 && this.DrawMode.previosDrawPoint.y != 0
+                && this.DrawMode.currentDrawPoint != null && this.DrawMode.currentDrawPoint.x != 0 && this.DrawMode.currentDrawPoint.y != 0
+            )
+            this.drawLine(this.DrawMode.previosDrawPoint.x, this.DrawMode.previosDrawPoint.y, this.DrawMode.currentDrawPoint.x, this.DrawMode.currentDrawPoint.y, this.markerColor, 10);
+        },
+
+        handleMouseMoveForDrawing(event) {
+            console.log(event);
+            if (this.isDrawMode) {
+                const x = event.pageX - this.$refs.canvas.offsetLeft;
+                const y = event.pageY - this.$refs.canvas.offsetTop;
+            }
+        },
+
+        drawLine(x1, y1, x2, y2, color, width) {
+            const canvas = this.$refs.canvas;
+            const ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+        },
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
             this.drawMarkPoints()
+
         },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch.jpg', import.meta.url);
 
-            this.sketchImage.onload = () => {
-                this.sketchImage.height = (window.innerWidth / this.sketchImage.width) * this.sketchImage.height;
-                this.sketchImage.width = window.innerWidth;
+            
+
+            return new Promise((resolve, reject) => {
+                this.sketchImage.onload = () => {
+                this.sketchImage.height = 1240;
+                this.sketchImage.width = 1920;
                 this.drawCanvas(this.sketchImage);
+                resolve();
             };
+                this.sketchImage.onerror = (err) => {
+                    reject(err);
+                };
+            });
         },
         setInitialBuildingDetails() {
             this.buildingDetails = {
@@ -216,9 +271,17 @@ export default {
                 icon.active = icon.id === id;
             });
             if (id === 2) {
+                this.DrawMode.isDrawMode = false;
                 this.isSketchMode = true;
-            } else {
+            }
+            else if (id === 4) {
+                this.DrawMode.isDrawMode = true;
                 this.isSketchMode = false;
+            }
+             else {
+                this.isSketchMode = false;
+                this.DrawMode.isDrawMode = false;
+
             }
         },
         successToastAdd(constructorType) {
@@ -255,6 +318,11 @@ export default {
                     id: 3,
                     path: ToolbarSketchIcon,
                     active: false,
+                },
+                {
+                    id : 4,
+                    path: ToolBarCreateRestrictionIcon,
+                    active: false,
                 }
             ];
         },
@@ -279,7 +347,7 @@ export default {
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative">
             <canvas class="position-absolute" ref="canvas"
-                v-on="isSketchMode ? { click: handleCanvasClick } : { click: handleCanvasCursor }">
+                v-on="isSketchMode ? { click: handleCanvasClick } : DrawMode.isDrawMode ? {click : handleClickDrawMode} : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">
@@ -403,7 +471,6 @@ export default {
 
 body {
     margin: 0;
-    overflow-x: hidden;
 }
 
 .animate__fadeIn {

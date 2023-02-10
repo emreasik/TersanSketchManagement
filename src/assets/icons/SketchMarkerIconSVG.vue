@@ -19,8 +19,6 @@
 </template>
 
 <style>
-.svg-container {
-}
 </style>
 
 <script>

@@ -17,7 +17,6 @@ export default class BuildingService {
             y: buildingData.y,
             sketchId: buildingData.sketchId,
         });
-
         return result.data;
     }
     async updateBuilding(updateBuildingData) {
@@ -40,3 +39,5 @@ export default class BuildingService {
         return result.data;
     }
 }
+
+

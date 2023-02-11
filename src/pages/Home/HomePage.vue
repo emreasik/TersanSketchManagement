@@ -1,5 +1,6 @@
 <script>
 import Toolbar from '../../components/common/appItems/Toolbar/Toolbar.vue'
+import DrawLineSettingsBar from '../../components/common/appItems/DrawLineItems/DrawLineSettingsBar.vue';
 import ToolbarLocationIcon from '../../assets/icons/location_marker_icon.png';
 import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
 import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
@@ -14,13 +15,14 @@ import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
-
+import {DrawLine} from '../../helpers/Canvas';
 export default {
     name: 'HomePage',
     components: {
-        Toolbar,
-        SketchMarkerIcon
-    },
+    Toolbar,
+    SketchMarkerIcon,
+    DrawLineSettingsBar
+},
     data() {
         return {
             icons: [],
@@ -29,23 +31,8 @@ export default {
             buildingDetailsForUpdate: {},
             markPoints: [],
             isSketchMode: false,
-            DrawMode: {
-                isDrawMode: false,
-                previosDrawPoint: {
-                    x: 0,
-                    y: 0
-                },
-                currentDrawPoint: {
-                    x: 0,
-                    y: 0
-                },
-                colors : {
-                    circleColor: "#E74C3C",
-                    lineColor: "#E74C3C",
-                    borderColor: "#000000",
-                },
-                pointHistory: [],
-            },
+            isDrawMode: false,
+            drawLine:null,
             serviceMarkPoints: [],
             clickedPoint: {},
             sketchImage: new Image(),
@@ -67,80 +54,22 @@ export default {
     },
     async mounted() {
         await this.setSketchImage();
+        this.setDrawLine();
 
     },
     methods: {
+        setDrawLine(){
+            this.drawLine = new DrawLine(this.$refs.canvas);
+        },
         handleClickDrawMode(event) {
-            let history = this.DrawMode.pointHistory;
-            let circleFound = false;
-            
-            history.forEach((point) => {
-                // ctrl pressed
-                if  (Math.abs(point.x - (event.pageX - this.$refs.canvas.offsetLeft)) < 20 && Math.abs(point.y - (event.pageY - this.$refs.canvas.offsetTop)) < 20
-                && event.ctrlKey
-                ) {
-                    this.DrawMode.previosDrawPoint.x = point.x;
-                    this.DrawMode.previosDrawPoint.y = point.y;
-                    circleFound = true;
-                }
-                else if (Math.abs(point.x - (event.pageX - this.$refs.canvas.offsetLeft)) < 20 && Math.abs(point.y - (event.pageY - this.$refs.canvas.offsetTop)) < 20) {
-                    this.DrawMode.isDrawMode = true;
-                    this.DrawMode.previosDrawPoint.x = 0;
-                    this.DrawMode.previosDrawPoint.y = 0;
-                    this.DrawMode.currentDrawPoint.x = point.x;
-                    this.DrawMode.currentDrawPoint.y = point.y;
-                    circleFound = true;
-                    return;
-                }
-            })
-            let colors = this.DrawMode.colors;
-            if(this.DrawMode.currentDrawPoint != null) {
-                this.DrawMode.previosDrawPoint.x = this.DrawMode.currentDrawPoint.x;
-                this.DrawMode.previosDrawPoint.y = this.DrawMode.currentDrawPoint.y;
+            let clickedPoint = {
+                x:event.pageX - this.$refs.canvas.offsetLeft,
+                y:event.pageY - this.$refs.canvas.offsetTop
             }
-            this.DrawMode.currentDrawPoint.x = event.pageX - this.$refs.canvas.offsetLeft;
-            this.DrawMode.currentDrawPoint.y = event.pageY - this.$refs.canvas.offsetTop;
+            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
 
-            if(!circleFound){
-                this.drawCirleAndFill(event.pageX - this.$refs.canvas.offsetLeft, event.pageY - this.$refs.canvas.offsetTop, colors.circleColor,colors.borderColor,2);
-                this.DrawMode.pointHistory.push({x: event.pageX - this.$refs.canvas.offsetLeft, y: event.pageY - this.$refs.canvas.offsetTop});
-            }
-            if(this.DrawMode.previosDrawPoint != null && this.DrawMode.previosDrawPoint.x != 0 && this.DrawMode.previosDrawPoint.y != 0
-                && this.DrawMode.currentDrawPoint != null && this.DrawMode.currentDrawPoint.x != 0 && this.DrawMode.currentDrawPoint.y != 0
-            )
-            this.drawLine(this.DrawMode.previosDrawPoint.x, this.DrawMode.previosDrawPoint.y, this.DrawMode.currentDrawPoint.x, this.DrawMode.currentDrawPoint.y, this.markerColor, 3);
         },
 
-        handleMouseMoveForDrawing(event) {
-            console.log(event);
-            if (this.isDrawMode) {
-                const x = event.pageX - this.$refs.canvas.offsetLeft;
-                const y = event.pageY - this.$refs.canvas.offsetTop;
-            }
-        },
-
-        drawCirleAndFill(x, y, color,strokeColor,width) {
-            const canvas = this.$refs.canvas;
-            const ctx = canvas.getContext('2d');
-            ctx.beginPath();
-            ctx.arc(x, y, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.lineWidth = width;
-            ctx.strokeStyle = strokeColor;
-            ctx.stroke();
-        },
-
-        drawLine(x1, y1, x2, y2, color, width) {
-            const canvas = this.$refs.canvas;
-            const ctx = canvas.getContext('2d');
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            ctx.stroke();
-        },
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
             this.drawMarkPoints()
@@ -242,7 +171,6 @@ export default {
             }
         },
         canvasRefresh() {
-            console.log(this.markPoints);
             this.drawCanvas(this.sketchImage);
             this.drawMarkPoints();
         },
@@ -318,17 +246,25 @@ export default {
                 icon.active = icon.id === id;
             });
             if (id === 2) {
-                this.DrawMode.isDrawMode = false;
+                this.isDrawMode = false;
                 this.isSketchMode = true;
+                this.isDrawLineVisible = false;
             }
             else if (id === 4) {
-                this.DrawMode.isDrawMode = true;
+                this.isDrawMode = true;
                 this.isSketchMode = false;
+                this.isDrawLineVisible = true;
             }
              else {
                 this.isSketchMode = false;
-                this.DrawMode.isDrawMode = false;
+                this.isDrawMode = false;
+                this.isDrawLineVisible = false;
 
+            }
+        },
+        resetCanvas(){
+            if (this.drawLine.reset()) {
+                this.canvasRefresh();
             }
         },
         successToastAdd(constructorType) {
@@ -362,13 +298,13 @@ export default {
                     active: false
                 },
                 {
-                    id: 3,
-                    path: ToolbarSketchIcon,
+                    id : 4,
+                    path: ToolBarCreateRestrictionIcon,
                     active: false,
                 },
                 {
-                    id : 4,
-                    path: ToolBarCreateRestrictionIcon,
+                    id: 3,
+                    path: ToolbarSketchIcon,
                     active: false,
                 }
             ];
@@ -385,16 +321,17 @@ export default {
                 }
             ];
         },
-    }
+    },
 }
 </script>
 
 <template>
     <div class="home-page">
+        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas"/>
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative">
             <canvas class="position-absolute" ref="canvas"
-                v-on="isSketchMode ? { click: handleCanvasClick } : DrawMode.isDrawMode ? {click : handleClickDrawMode} : { click: handleCanvasCursor }">
+                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">

@@ -16,6 +16,8 @@ export default class BuildingService {
             x: buildingData.x,
             y: buildingData.y,
             sketchId: buildingData.sketchId,
+        }).catch(error => {
+            console.log(error);
         });
 
         return result.data;

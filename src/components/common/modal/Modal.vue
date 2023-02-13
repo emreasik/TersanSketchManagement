@@ -2,8 +2,9 @@
     <div class="modal fade" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
+                <label for="">{{ inputDetails }}</label>
                 <ModalHeader :modalHeaderTitle="modalTypeDetails.modalHeaderLabel"></ModalHeader>
-                <ModalBody :modalBodyLabel="modalTypeDetails.modalBodyLabel"
+                <ModalBody @input-data="emitData" :modalBodyLabel="modalTypeDetails.modalBodyLabel"
                     :modalBodyInputSpanX="modalTypeDetails.modalBodyInputSpanX"
                     :modalBodyInputSpanY="modalTypeDetails.modalBodyInputSpanY" :markerSvgColor="markerSvgColor"
                     :inputDetails="inputDetails"></ModalBody>
@@ -52,10 +53,12 @@ export default {
             type: Object,
             required: true
         }
+    },
+    methods: {
+        emitData(buildingDetails) {
+            console.log(buildingDetails)
+            this.$emit('input-data', buildingDetails);
+        }
     }
 }
 </script>
-
-<style>
-
-</style>

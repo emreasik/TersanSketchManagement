@@ -38,7 +38,6 @@ export default {
             locationMapIcon: new Image(),
             locationMapIconClicked: new Image(),
             markerColor: "#E74C3C",
-            isModalAddType: false,
             modalAddBuildingDetails: addBuildingLabels(),
             modalUpdateBuildingDetails: updateBuildingLabels(),
         }
@@ -60,7 +59,7 @@ export default {
             this.drawMarkPoints()
         },
         setSketchImage() {
-            this.sketchImage.src = new URL('../../assets/images/sketch.jpg', import.meta.url);
+            this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
 
             this.sketchImage.onload = () => {
                 this.sketchImage.height = (window.innerWidth / this.sketchImage.width) * this.sketchImage.height;
@@ -77,6 +76,11 @@ export default {
                 sketchId: 1,
             }
         },
+        setBuildingDetailsFromModalComponent(updateBuildingData) {
+            console.log(updateBuildingData);
+            this.buildingDetailsForUpdate = updateBuildingData;
+            console.log(this.buildingDetailsForUpdate);
+        },
         setInitialClickIcons() {
             this.locationMapIcon.src = LocationMapIcon;
             this.locationMapIconClicked.src = LocationMapIconClicked;
@@ -85,7 +89,6 @@ export default {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
             const y = event.pageY - this.$refs.canvas.offsetTop;
 
-            this.isModalAddType = true;
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -100,16 +103,18 @@ export default {
             card.classList.add('d-none');
         },
         openUpdateModal() {
-            this.isModalAddType = false;
             this.openModal(this.$refs.UpdateModalComponent.$el);
             this.updateBuildingVariables();
         },
         updateBuildingVariables() {
+            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
             const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
+            console.log(building);
             this.buildingDetailsForUpdate.id = building.id;
             this.buildingDetailsForUpdate.name = building.name;
             this.buildingDetailsForUpdate.x = building.x;
             this.buildingDetailsForUpdate.y = building.y;
+            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
         },
         async addNewBuilding() {
             let result = await buildingService.addBuilding(this.buildingDetails);
@@ -121,7 +126,13 @@ export default {
                     y: result.y,
                 });
                 this.drawMarkPoints();
-                this.buildingDetails = {};
+                this.buildingDetails = {
+                    id: 0,
+                    name: '',
+                    x: 0,
+                    y: 0,
+                    sketchId: 1,
+                };
                 this.successToastAdd('Bina');
             } else {
                 this.errorToastAdd('Bina');
@@ -294,8 +305,7 @@ export default {
                 style="width: 18rem;">
                 <h6 class="custom-card__tag">{{ clickedPoint.name }}</h6>
                 <div class="card-body">
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of
-                        the card's content.</p>
+                    <p class="card-text">Some informations about this building.</p>
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">An item</li>
@@ -310,8 +320,10 @@ export default {
     </div>
     <ModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails" :markerSvgColor="markerColor"
         :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding"></ModalComponent>
-    <ModalComponent ref="UpdateModalComponent" :modalTypeDetails="modalUpdateBuildingDetails"
-        :markerSvgColor="markerColor" :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding" :footerDeleteButtonFuction="deleteBuilding">
+    <ModalComponent ref="UpdateModalComponent" @input-data="setBuildingDetailsFromModalComponent"
+        :modalTypeDetails="modalUpdateBuildingDetails" :markerSvgColor="markerColor"
+        :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
+        :footerDeleteButtonFuction="deleteBuilding">
     </ModalComponent>
 </template>
 

@@ -16,13 +16,18 @@ import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
 import {DrawLine} from '../../helpers/Canvas';
+import ModalComponent from '../../components/common/modal/Modal.vue';
+import { addBuildingLabels } from '../../components/common/modal/constants/labels.js'
+import { updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
+
 export default {
     name: 'HomePage',
     components: {
-    Toolbar,
-    SketchMarkerIcon,
-    DrawLineSettingsBar
-},
+        Toolbar,
+        SketchMarkerIcon,
+        ModalComponent,
+        DrawLineSettingsBar
+    },
     data() {
         return {
             icons: [],
@@ -39,9 +44,10 @@ export default {
             locationMapIcon: new Image(),
             locationMapIconClicked: new Image(),
             markerColor: "#E74C3C",
-            
-
-           
+            isModalAddType: false,
+            modalAddBuildingDetails: addBuildingLabels(),
+            modalUpdateBuildingDetails: updateBuildingLabels(),
+            isDrawLineVisible: false,
         }
     },
     async created() {
@@ -109,21 +115,23 @@ export default {
             const x = event.pageX - this.$refs.canvas.offsetLeft;
             const y = event.pageY - this.$refs.canvas.offsetTop;
 
-            this.openModal('exampleModal');
+            this.isModalAddType = true;
+            this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
             this.buildingDetails.y = y - 25;
         },
-        openModal(modalName) {
-            let myModal = new Modal(document.getElementById(modalName), {});
-            myModal.show();
+        openModal(modalRefence) {
+            let modal = new Modal(modalRefence);
+            modal.show();
         },
         closeCard() {
             const card = document.querySelector('.card');
             card.classList.add('d-none');
         },
         openUpdateModal() {
-            this.openModal('buildingUpdateModal');
+            this.isModalAddType = false;
+            this.openModal(this.$refs.UpdateModalComponent.$el);
             this.updateBuildingVariables();
         },
         updateBuildingVariables() {
@@ -351,103 +359,11 @@ export default {
             </div>
         </div>
     </div>
-    <!-- Add Building Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-main-color">
-                    <h5 class="modal-title text-white" id="exampleModalLabel">Yeni Bina Ekle</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="mb-3">
-                            <label for="recipient-name" class="col-form-label">Bina Adı</label>
-                            <input type="text" class="form-control" id="recipient-name" v-model="buildingDetails.name">
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex gap-3">
-                                <div class="d-flex input-group flex-nowrap">
-                                    <span class="input-group-text " id="addon-wrapping">X</span>
-                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.x"
-                                        aria-label="Username" aria-describedby="addon-wrapping">
-                                </div>
-                                <div class="d-flex input-group flex-nowrap">
-                                    <span class="input-group-text" id="addon-wrapping">Y</span>
-                                    <input type="text" class="form-control shadow-none" :value="buildingDetails.y"
-                                        aria-label="Username" aria-describedby="addon-wrapping">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="svg-color-container">
-                            <div class="svg-color-container__marker">
-                                <SketchMarkerIcon :svgColor="markerColor"
-                                    className="svg-color-container__marker__component" />
-                            </div>
-                            <div class="svg-color-container__picker">
-                                <input class="svg-color-container__picker__input" v-model="markerColor" type="color"
-                                    id="favcolor" name="favcolor" />
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn bg-main-color text-white" @click="addNewBuilding"
-                        data-bs-dismiss="modal">Kaydet</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Update Building Modal -->
-    <div class="modal fade" id="buildingUpdateModal" tabindex="-1" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-main-color">
-                    <h5 class="modal-title text-white" id="exampleModalLabel">Bina Düzenle</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="mb-3">
-                            <label for="recipient-name" class="col-form-label">Bina Adı</label>
-                            <input type="text" class="form-control" id="recipient-name"
-                                v-model="buildingDetailsForUpdate.name">
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex gap-3">
-                                <div class="d-flex input-group flex-nowrap">
-                                    <span class="input-group-text " id="addon-wrapping">X</span>
-                                    <input type="text" class="form-control shadow-none"
-                                        v-model="buildingDetailsForUpdate.x" aria-label="Username"
-                                        aria-describedby="addon-wrapping">
-                                </div>
-                                <div class="d-flex input-group flex-nowrap">
-                                    <span class="input-group-text" id="addon-wrapping">Y</span>
-                                    <input type="text" class="form-control shadow-none"
-                                        v-model="buildingDetailsForUpdate.y" aria-label="Username"
-                                        aria-describedby="addon-wrapping">
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
-                        @click="deleteBuilding">Sil</button>
-                    <div class="d-flex gap-3">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                        <button type="button" class="btn bg-main-color text-white" @click="updateBuilding"
-                            data-bs-dismiss="modal">Kaydet</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <ModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails" :markerSvgColor="markerColor"
+        :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding"></ModalComponent>
+    <ModalComponent ref="UpdateModalComponent" :modalTypeDetails="modalUpdateBuildingDetails"
+        :markerSvgColor="markerColor" :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding" :footerDeleteButtonFuction="deleteBuilding">
+    </ModalComponent>
 </template>
 
 <style lang="scss">

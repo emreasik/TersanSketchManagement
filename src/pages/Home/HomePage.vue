@@ -40,6 +40,11 @@ export default {
             markerColor: "#E74C3C",
             modalAddBuildingDetails: addBuildingLabels(),
             modalUpdateBuildingDetails: updateBuildingLabels(),
+            // TODO: Move to constants
+            scale : 1,
+            isPanning : false,
+            start : {x:0,y:0},
+            offset : {x:0,y:0},
         }
     },
     async created() {
@@ -62,8 +67,8 @@ export default {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
 
             this.sketchImage.onload = () => {
-                this.sketchImage.height = (window.innerWidth / this.sketchImage.width) * this.sketchImage.height;
-                this.sketchImage.width = window.innerWidth;
+                this.sketchImage.height = 1240;
+                this.sketchImage.width = 1920;
                 this.drawCanvas(this.sketchImage);
             };
         },
@@ -86,8 +91,13 @@ export default {
             this.locationMapIconClicked.src = LocationMapIconClicked;
         },
         handleCanvasClick(event) {
-            const x = event.pageX - this.$refs.canvas.offsetLeft;
-            const y = event.pageY - this.$refs.canvas.offsetTop;
+            // const x = event.pageX - this.$refs.canvas.offsetLeft;
+            // const y = event.pageY - this.$refs.canvas.offsetTop;
+            const x = event.offsetX;
+            const y = event.offsetY;
+            //find the point o canvas
+            console.log(x, y);
+            
 
             this.openModal(this.$refs.AddModalComponent.$el);
 
@@ -176,9 +186,12 @@ export default {
             }
         },
         handleCanvasCursor(event) {
-            const x = event.pageX - this.$refs.canvas.offsetLeft;
-            const y = event.pageY - this.$refs.canvas.offsetTop;
+            // const x = event.pageX - this.$refs.canvas.offsetLeft;
+            // const y = event.pageY - this.$refs.canvas.offsetTop;
 
+            const x = event.offsetX;
+            const y = event.offsetY;
+console.log("delinoy");
             const ctx = this.$refs.canvas.getContext("2d")
 
             const card = document.querySelector('.card');
@@ -290,14 +303,48 @@ export default {
                 }
             ];
         },
+        scalePage(event) {
+            event.preventDefault();
+            if (event.deltaY > 0 && this.scale > 1) {
+                this.scale -= 0.1;
+            } else if(event.deltaY < 0 ) {
+                this.scale += 0.1;
+            }
+            else{
+                this.scale = 1;
+            }
+            this.$refs.homepage.style.transform = `scale(${this.scale})`;
+            this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
+        },    
+        // panStart(event) {
+        //     event.preventDefault();
+        //     this.isPanning = true;
+        //     this.start.x = event.clientX - this.offset.x;
+        //     this.start.y = event.clientY - this.offset.y;
+        // },
+        // panMove(event) {
+        //     //pan limit
+        //     if (this.offset.x > 0 || this.offset.y > 0) {
+        //         this.offset.x = 0;
+        //         this.offset.y = 0;
+        //     }
+        //     if (!this.isPanning) return; // Do nothing
+        //     this.offset.x = event.clientX - this.start.x;
+        //     this.offset.y = event.clientY - this.start.y;
+        //     this.$refs.homepage.style.translate = `${this.offset.x}px ${this.offset.y}px`;
+        // },
+        // panEnd(event) {
+        //     this.isPanning = false;
+        // },
+
     }
 }
 </script>
 
 <template>
-    <div class="home-page">
+    <div class="home-page" >
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
-        <div class="position-relative">
+        <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"
                 v-on="isSketchMode ? { click: handleCanvasClick } : { click: handleCanvasCursor }">
             </canvas>
@@ -334,6 +381,8 @@ body {
     margin: 0;
     overflow-x: hidden;
 }
+
+
 
 .animate__fadeIn {
     --animate-duration: 200ms;

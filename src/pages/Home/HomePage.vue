@@ -6,6 +6,7 @@ import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
 import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
 import ToolbarAddIcon from '../../assets/icons/add_icon.png';
 import ToolbarListIcon from '../../assets/icons/list_icon.png';
+import Ship from '../../assets/icons/ship.png';
 import ToolBarCreateRestrictionIcon from '../../assets/icons/create_restriction_icon.png';
 
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
@@ -19,6 +20,7 @@ import {DrawLine} from '../../helpers/Canvas';
 import ModalComponent from '../../components/common/modal/Modal.vue';
 import { addBuildingLabels } from '../../components/common/modal/constants/labels.js'
 import { updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
+
 
 export default {
     name: 'HomePage',
@@ -73,10 +75,19 @@ export default {
         },
         handleClickDrawMode(event) {
             let clickedPoint = {
-                x:event.pageX - this.$refs.canvas.offsetLeft,
-                y:event.pageY - this.$refs.canvas.offsetTop
-            }
+                x:event.offsetX,
+                y:event.offsetY            }
             this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
+            
+            // set image to canvas
+            if(this.drawLine.hasEnoughPointsForRectangle()){
+                let img = new Image();
+                img.src = Ship;
+                img.onload = () => {
+                    this.drawLine.pushImageToRectangleField(img);
+                }
+            }
+
 
         },
 
@@ -220,7 +231,6 @@ export default {
 
             const x = event.offsetX;
             const y = event.offsetY;
-console.log("delinoy");
             const ctx = this.$refs.canvas.getContext("2d")
 
             const card = document.querySelector('.card');
@@ -365,7 +375,9 @@ console.log("delinoy");
             }
             this.$refs.homepage.style.transform = `scale(${this.scale})`;
             this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
-        },    
+        },
+        
+        
         // panStart(event) {
         //     event.preventDefault();
         //     this.isPanning = true;

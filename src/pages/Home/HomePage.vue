@@ -41,10 +41,10 @@ export default {
             modalAddBuildingDetails: addBuildingLabels(),
             modalUpdateBuildingDetails: updateBuildingLabels(),
             // TODO: Move to constants
-            scale : 1,
-            isPanning : false,
-            start : {x:0,y:0},
-            offset : {x:0,y:0},
+            scale: 1,
+            isPanning: false,
+            start: { x: 0, y: 0 },
+            offset: { x: 0, y: 0 },
         }
     },
     async created() {
@@ -78,6 +78,7 @@ export default {
                 name: '',
                 x: 0,
                 y: 0,
+                hexColorCode: this.markerColor,
                 sketchId: 1,
             }
         },
@@ -97,8 +98,6 @@ export default {
             const y = event.offsetY;
             //find the point o canvas
             console.log(x, y);
-            
-
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -124,6 +123,7 @@ export default {
             this.buildingDetailsForUpdate.name = building.name;
             this.buildingDetailsForUpdate.x = building.x;
             this.buildingDetailsForUpdate.y = building.y;
+            this.buildingDetailsForUpdate.hexColorCode = building.hexColorCode
             console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
         },
         async addNewBuilding() {
@@ -134,6 +134,7 @@ export default {
                     name: result.name,
                     x: result.x,
                     y: result.y,
+                    hexColorCode: result.hexColorCode
                 });
                 this.drawMarkPoints();
                 this.buildingDetails = {
@@ -141,6 +142,7 @@ export default {
                     name: '',
                     x: 0,
                     y: 0,
+                    hexColorCode: this.markerColor,
                     sketchId: 1,
                 };
                 this.successToastAdd('Bina');
@@ -158,6 +160,7 @@ export default {
                     name: result.name,
                     x: result.x,
                     y: result.y,
+                    hexColorCode: result.hexColorCode
                 });
                 this.clickedPoint = result;
 
@@ -191,7 +194,6 @@ export default {
 
             const x = event.offsetX;
             const y = event.offsetY;
-console.log("delinoy");
             const ctx = this.$refs.canvas.getContext("2d")
 
             const card = document.querySelector('.card');
@@ -307,15 +309,15 @@ console.log("delinoy");
             event.preventDefault();
             if (event.deltaY > 0 && this.scale > 1) {
                 this.scale -= 0.1;
-            } else if(event.deltaY < 0 ) {
+            } else if (event.deltaY < 0) {
                 this.scale += 0.1;
             }
-            else{
+            else {
                 this.scale = 1;
             }
             this.$refs.homepage.style.transform = `scale(${this.scale})`;
             this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
-        },    
+        },
         // panStart(event) {
         //     event.preventDefault();
         //     this.isPanning = true;
@@ -342,7 +344,7 @@ console.log("delinoy");
 </script>
 
 <template>
-    <div class="home-page" >
+    <div class="home-page">
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"

@@ -1,8 +1,6 @@
 <template>
     <div class="modal-body">
         <form>
-            <label for="">{{ inputDetails }}</label>
-            <label for="">{{ setInputDatas }}</label>
             <div class="mb-3">
                 <label for="recipient-name" class="col-form-label"> {{ modalBodyLabel }}</label>
                 <input type="text" class="form-control" v-model="inputDetails.name" @input="emitData">
@@ -23,10 +21,10 @@
             </div>
             <div class="svg-color-container">
                 <div class="svg-color-container__marker">
-                    <SketchMarkerIcon :svgColor="markerColor" className="svg-color-container__marker__component" />
+                    <SketchMarkerIcon :svgColor="inputDetails.hexColorCode" class="svg-color-container__marker__svg-component"/>
                 </div>
                 <div class="svg-color-container__picker">
-                    <input class="svg-color-container__picker__input" v-model="markerColor" type="color" id="favcolor"
+                    <input class="svg-color-container__picker__input" v-model="inputDetails.hexColorCode" type="color" id="favcolor"
                         name="favcolor" />
                 </div>
             </div>
@@ -82,3 +80,11 @@ export default {
     },
 }
 </script>
+
+<style>
+.svg-color-container__marker__svg-component{
+    margin: 5px;
+    width: 70px;
+    height: 70px;
+}
+</style>

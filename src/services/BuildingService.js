@@ -15,6 +15,7 @@ export default class BuildingService {
             name: buildingData.name,
             x: buildingData.x,
             y: buildingData.y,
+            hexColorCode: buildingData.hexColorCode,
             sketchId: buildingData.sketchId,
         }).catch(error => {
             console.log(error);
@@ -28,6 +29,7 @@ export default class BuildingService {
             name: updateBuildingData.name,
             x: updateBuildingData.x,
             y: updateBuildingData.y,
+            hexColorCode: updateBuildingData.hexColorCode,
         });
 
         return result.data;

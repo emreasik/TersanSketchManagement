@@ -1,20 +1,22 @@
 <template>
     <div class="modal-body">
         <form>
+            <label for="">{{ inputDetails }}</label>
+            <label for="">{{ setInputDatas }}</label>
             <div class="mb-3">
                 <label for="recipient-name" class="col-form-label"> {{ modalBodyLabel }}</label>
-                <input type="text" class="form-control" v-model="inputs.name" id="recipient-name">
+                <input type="text" class="form-control" v-model="inputDetails.name" @input="emitData">
             </div>
             <div class="mb-3">
                 <div class="d-flex gap-3">
                     <div class="d-flex input-group flex-nowrap">
                         <span class="input-group-text " id="addon-wrapping">{{ modalBodyInputSpanX }}</span>
-                        <input type="text" class="form-control shadow-none" :value="inputs.x"
+                        <input type="text" class="form-control shadow-none" v-model="inputDetails.x" @input="emitData"
                             aria-label="Username" aria-describedby="addon-wrapping">
                     </div>
                     <div class="d-flex input-group flex-nowrap">
                         <span class="input-group-text" id="addon-wrapping"> {{ modalBodyInputSpanY }}</span>
-                        <input type="text" class="form-control shadow-none" :value="inputs.y"
+                        <input type="text" class="form-control shadow-none" v-model="inputDetails.y" @input="emitData"
                             aria-label="Username" aria-describedby="addon-wrapping">
                     </div>
                 </div>
@@ -40,7 +42,12 @@ export default {
     data() {
         return {
             markerColor: this.markerSvgColor,
-            inputs: this.inputDetails
+            inputs: {}
+        }
+    },
+    computed: {
+        setInputDatas() {
+            return this.inputs = this.inputDetails;
         }
     },
     components: {
@@ -67,10 +74,11 @@ export default {
             type: Object,
             required: true
         }
-    }
+    },
+    methods: {
+        emitData() {
+            this.$emit('inputData', this.inputs);
+        }
+    },
 }
 </script>
-
-<style>
-
-</style>

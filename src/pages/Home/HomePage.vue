@@ -44,10 +44,14 @@ export default {
             locationMapIcon: new Image(),
             locationMapIconClicked: new Image(),
             markerColor: "#E74C3C",
-            isModalAddType: false,
             modalAddBuildingDetails: addBuildingLabels(),
             modalUpdateBuildingDetails: updateBuildingLabels(),
             isDrawLineVisible: false,
+            // TODO: Move to constants
+            scale : 1,
+            isPanning : false,
+            start : {x:0,y:0},
+            offset : {x:0,y:0},
         }
     },
     async created() {
@@ -82,7 +86,7 @@ export default {
 
         },
         setSketchImage() {
-            this.sketchImage.src = new URL('../../assets/images/sketch.jpg', import.meta.url);
+            this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
 
             
 
@@ -107,15 +111,24 @@ export default {
                 sketchId: 1,
             }
         },
+        setBuildingDetailsFromModalComponent(updateBuildingData) {
+            console.log(updateBuildingData);
+            this.buildingDetailsForUpdate = updateBuildingData;
+            console.log(this.buildingDetailsForUpdate);
+        },
         setInitialClickIcons() {
             this.locationMapIcon.src = LocationMapIcon;
             this.locationMapIconClicked.src = LocationMapIconClicked;
         },
         handleCanvasClick(event) {
-            const x = event.pageX - this.$refs.canvas.offsetLeft;
-            const y = event.pageY - this.$refs.canvas.offsetTop;
+            // const x = event.pageX - this.$refs.canvas.offsetLeft;
+            // const y = event.pageY - this.$refs.canvas.offsetTop;
+            const x = event.offsetX;
+            const y = event.offsetY;
+            //find the point o canvas
+            console.log(x, y);
+            
 
-            this.isModalAddType = true;
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -130,16 +143,18 @@ export default {
             card.classList.add('d-none');
         },
         openUpdateModal() {
-            this.isModalAddType = false;
             this.openModal(this.$refs.UpdateModalComponent.$el);
             this.updateBuildingVariables();
         },
         updateBuildingVariables() {
+            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
             const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
+            console.log(building);
             this.buildingDetailsForUpdate.id = building.id;
             this.buildingDetailsForUpdate.name = building.name;
             this.buildingDetailsForUpdate.x = building.x;
             this.buildingDetailsForUpdate.y = building.y;
+            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
         },
         async addNewBuilding() {
             let result = await buildingService.addBuilding(this.buildingDetails);
@@ -151,7 +166,13 @@ export default {
                     y: result.y,
                 });
                 this.drawMarkPoints();
-                this.buildingDetails = {};
+                this.buildingDetails = {
+                    id: 0,
+                    name: '',
+                    x: 0,
+                    y: 0,
+                    sketchId: 1,
+                };
                 this.successToastAdd('Bina');
             } else {
                 this.errorToastAdd('Bina');
@@ -194,9 +215,12 @@ export default {
             }
         },
         handleCanvasCursor(event) {
-            const x = event.pageX - this.$refs.canvas.offsetLeft;
-            const y = event.pageY - this.$refs.canvas.offsetTop;
+            // const x = event.pageX - this.$refs.canvas.offsetLeft;
+            // const y = event.pageY - this.$refs.canvas.offsetTop;
 
+            const x = event.offsetX;
+            const y = event.offsetY;
+console.log("delinoy");
             const ctx = this.$refs.canvas.getContext("2d")
 
             const card = document.querySelector('.card');
@@ -329,7 +353,41 @@ export default {
                 }
             ];
         },
-    },
+        scalePage(event) {
+            event.preventDefault();
+            if (event.deltaY > 0 && this.scale > 1) {
+                this.scale -= 0.1;
+            } else if(event.deltaY < 0 ) {
+                this.scale += 0.1;
+            }
+            else{
+                this.scale = 1;
+            }
+            this.$refs.homepage.style.transform = `scale(${this.scale})`;
+            this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
+        },    
+        // panStart(event) {
+        //     event.preventDefault();
+        //     this.isPanning = true;
+        //     this.start.x = event.clientX - this.offset.x;
+        //     this.start.y = event.clientY - this.offset.y;
+        // },
+        // panMove(event) {
+        //     //pan limit
+        //     if (this.offset.x > 0 || this.offset.y > 0) {
+        //         this.offset.x = 0;
+        //         this.offset.y = 0;
+        //     }
+        //     if (!this.isPanning) return; // Do nothing
+        //     this.offset.x = event.clientX - this.start.x;
+        //     this.offset.y = event.clientY - this.start.y;
+        //     this.$refs.homepage.style.translate = `${this.offset.x}px ${this.offset.y}px`;
+        // },
+        // panEnd(event) {
+        //     this.isPanning = false;
+        // },
+
+    }
 }
 </script>
 
@@ -337,7 +395,7 @@ export default {
     <div class="home-page">
         <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas"/>
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
-        <div class="position-relative">
+        <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"
                 v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : { click: handleCanvasCursor }">
             </canvas>
@@ -345,8 +403,7 @@ export default {
                 style="width: 18rem;">
                 <h6 class="custom-card__tag">{{ clickedPoint.name }}</h6>
                 <div class="card-body">
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk of
-                        the card's content.</p>
+                    <p class="card-text">Some informations about this building.</p>
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">An item</li>
@@ -361,8 +418,10 @@ export default {
     </div>
     <ModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails" :markerSvgColor="markerColor"
         :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding"></ModalComponent>
-    <ModalComponent ref="UpdateModalComponent" :modalTypeDetails="modalUpdateBuildingDetails"
-        :markerSvgColor="markerColor" :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding" :footerDeleteButtonFuction="deleteBuilding">
+    <ModalComponent ref="UpdateModalComponent" @input-data="setBuildingDetailsFromModalComponent"
+        :modalTypeDetails="modalUpdateBuildingDetails" :markerSvgColor="markerColor"
+        :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
+        :footerDeleteButtonFuction="deleteBuilding">
     </ModalComponent>
 </template>
 
@@ -372,6 +431,8 @@ export default {
 body {
     margin: 0;
 }
+
+
 
 .animate__fadeIn {
     --animate-duration: 200ms;

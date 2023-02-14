@@ -1,5 +1,6 @@
 <script>
 import Toolbar from '../../components/common/appItems/Toolbar/Toolbar.vue'
+import ScrollButton from '../../components/common/appItems/Toolbar/ScrollButton.vue'
 import DrawLineSettingsBar from '../../components/common/appItems/DrawLineItems/DrawLineSettingsBar.vue';
 import ToolbarLocationIcon from '../../assets/icons/location_marker_icon.png';
 import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
@@ -20,13 +21,15 @@ import ModalComponent from '../../components/common/modal/Modal.vue';
 import { addBuildingLabels } from '../../components/common/modal/constants/labels.js'
 import { updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
 
+
 export default {
     name: 'HomePage',
     components: {
         Toolbar,
         SketchMarkerIcon,
         ModalComponent,
-        DrawLineSettingsBar
+        DrawLineSettingsBar,
+        ScrollButton
     },
     data() {
         return {
@@ -52,6 +55,7 @@ export default {
             isPanning : false,
             start : {x:0,y:0},
             offset : {x:0,y:0},
+            currentScrollInterval: null,
         }
     },
     async created() {
@@ -73,8 +77,8 @@ export default {
         },
         handleClickDrawMode(event) {
             let clickedPoint = {
-                x:event.pageX - this.$refs.canvas.offsetLeft,
-                y:event.pageY - this.$refs.canvas.offsetTop
+                x:event.offsetX,
+                y:event.offsetY
             }
             this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
 
@@ -83,7 +87,6 @@ export default {
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
             this.drawMarkPoints()
-
         },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
@@ -363,40 +366,75 @@ console.log("delinoy");
             else{
                 this.scale = 1;
             }
-            this.$refs.homepage.style.transform = `scale(${this.scale})`;
-            this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
-        },    
-        // panStart(event) {
-        //     event.preventDefault();
-        //     this.isPanning = true;
-        //     this.start.x = event.clientX - this.offset.x;
-        //     this.start.y = event.clientY - this.offset.y;
-        // },
-        // panMove(event) {
-        //     //pan limit
-        //     if (this.offset.x > 0 || this.offset.y > 0) {
-        //         this.offset.x = 0;
-        //         this.offset.y = 0;
-        //     }
-        //     if (!this.isPanning) return; // Do nothing
-        //     this.offset.x = event.clientX - this.start.x;
-        //     this.offset.y = event.clientY - this.start.y;
-        //     this.$refs.homepage.style.translate = `${this.offset.x}px ${this.offset.y}px`;
-        // },
-        // panEnd(event) {
-        //     this.isPanning = false;
-        // },
+            this.$refs.canvas.style.transform = `scale(${this.scale})`;
+            this.$refs.canvas.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
+        },
+        scrollScreen(direction) {
+            console.log(direction);
+            if(direction === 'left'){
+                this.currentScrollInterval =  setInterval(() => {
+                    window.scrollBy({
+                    top: 0,
+                    left: -100,
+                    behavior: 'smooth'
+                });
+                }, 100);
 
-    }
+                
+            }
+            else if(direction === 'right'){
+                 this.currentScrollInterval =  setInterval(() => {
+                    window.scrollBy({
+                    top: 0,
+                    left: 100,
+                    behavior: 'smooth'
+                });
+                }, 100);
+                
+            }
+            else if(direction === 'up'){
+                this.currentScrollInterval =  setInterval(() => {
+                    window.scrollBy({
+                    top: -100,
+                    left: 0,
+                    behavior: 'smooth'
+                });
+                }, 100);
+            }
+            else if(direction === 'down'){
+                this.currentScrollInterval =  setInterval(() => {
+                    window.scrollBy({
+                    top: 1000,
+                    left: 0,
+                    behavior: 'smooth'
+                });
+                }, 100);
+            }
+            else{
+                window.scrollBy({
+                    top: 0,
+                    left: 0,
+                    behavior: 'smooth'
+                });
+            }
+        },
+        stopScrollScreen() {
+            clearInterval(this.currentScrollInterval);
+        },
+
+    },
+  
 }
 </script>
 
 <template>
-    <div class="home-page">
+    <div class="home-page"  v-on:wheel="scalePage($event)" >
         <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas"/>
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
-        <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
-            <canvas class="position-absolute" ref="canvas"
+        <ScrollButton @scroll-screen="scrollScreen" @stop-scroll-screen="stopScrollScreen" />
+        <div class="position-relative"  ref="homepage">
+            <canvas class="position-absolute" ref="canvas"  
+                @mousedown="panStart" @mousemove="panMove" @mouseup="panEnd" @mouseleave="panEnd"
                 v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
@@ -428,8 +466,8 @@ console.log("delinoy");
 <style lang="scss">
 @use '../../assets/_variables.scss' as v;
 
-body {
-    margin: 0;
+body::-webkit-scrollbar  {
+    display: none;
 }
 
 
@@ -449,6 +487,8 @@ body {
     offset: 0;
     position: relative;
 }
+
+
 
 .home-page {
     z-index: auto;

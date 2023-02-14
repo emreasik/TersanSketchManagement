@@ -1,0 +1,15 @@
+
+
+<template>
+        <svg viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"
+            enable-background="new 0 0 512 512">
+            <path d="M160 115.4 180.7 96 352 256 180.7 416 160 396.7 310.5 256z" fill="#ffffff" class="fill-000000">
+            </path>
+        </svg>
+</template>
+
+<script>
+export default {
+    name: 'RightArrow',
+}
+</script>

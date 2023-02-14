@@ -23,10 +23,10 @@
             </div>
             <div class="svg-color-container">
                 <div class="svg-color-container__marker">
-                    <SketchMarkerIcon :svgColor="markerColor" className="svg-color-container__marker__component" />
+                    <SketchMarkerIcon :svgColor="inputDetails.hexColorCode" class="svg-color-container__marker__svg-component"/>
                 </div>
                 <div class="svg-color-container__picker">
-                    <input class="svg-color-container__picker__input" v-model="markerColor" type="color" id="favcolor"
+                    <input class="svg-color-container__picker__input" v-model="inputDetails.hexColorCode" type="color" id="favcolor"
                         name="favcolor" />
                 </div>
             </div>
@@ -82,3 +82,11 @@ export default {
     },
 }
 </script>
+
+<style>
+.svg-color-container__marker__svg-component{
+    margin: 5px;
+    width: 70px;
+    height: 70px;
+}
+</style>

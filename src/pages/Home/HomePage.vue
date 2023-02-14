@@ -119,6 +119,7 @@ export default {
                 name: '',
                 x: 0,
                 y: 0,
+                hexColorCode: this.markerColor,
                 sketchId: 1,
             }
         },
@@ -138,8 +139,6 @@ export default {
             const y = event.offsetY;
             //find the point o canvas
             console.log(x, y);
-            
-
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -175,6 +174,7 @@ export default {
                     name: result.name,
                     x: result.x,
                     y: result.y,
+                    hexColorCode: result.hexColorCode
                 });
                 this.drawMarkPoints();
                 this.buildingDetails = {
@@ -182,6 +182,7 @@ export default {
                     name: '',
                     x: 0,
                     y: 0,
+                    hexColorCode: this.markerColor,
                     sketchId: 1,
                 };
                 this.successToastAdd('Bina');
@@ -199,6 +200,7 @@ export default {
                     name: result.name,
                     x: result.x,
                     y: result.y,
+                    hexColorCode: result.hexColorCode
                 });
                 this.clickedPoint = result;
 
@@ -377,28 +379,6 @@ export default {
             this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
         },
         
-        
-        // panStart(event) {
-        //     event.preventDefault();
-        //     this.isPanning = true;
-        //     this.start.x = event.clientX - this.offset.x;
-        //     this.start.y = event.clientY - this.offset.y;
-        // },
-        // panMove(event) {
-        //     //pan limit
-        //     if (this.offset.x > 0 || this.offset.y > 0) {
-        //         this.offset.x = 0;
-        //         this.offset.y = 0;
-        //     }
-        //     if (!this.isPanning) return; // Do nothing
-        //     this.offset.x = event.clientX - this.start.x;
-        //     this.offset.y = event.clientY - this.start.y;
-        //     this.$refs.homepage.style.translate = `${this.offset.x}px ${this.offset.y}px`;
-        // },
-        // panEnd(event) {
-        //     this.isPanning = false;
-        // },
-
     }
 }
 </script>

@@ -6,6 +6,7 @@ import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
 import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
 import ToolbarAddIcon from '../../assets/icons/add_icon.png';
 import ToolbarListIcon from '../../assets/icons/list_icon.png';
+import ShipIcon from '../../assets/icons/shipIcon.png';
 import Ship from '../../assets/icons/ship.png';
 import ToolBarCreateRestrictionIcon from '../../assets/icons/create_restriction_icon.png';
 
@@ -39,6 +40,7 @@ export default {
             markPoints: [],
             isSketchMode: false,
             isDrawMode: false,
+            isShipMode: false,
             drawLine:null,
             serviceMarkPoints: [],
             clickedPoint: {},
@@ -50,10 +52,8 @@ export default {
             modalUpdateBuildingDetails: updateBuildingLabels(),
             isDrawLineVisible: false,
             // TODO: Move to constants
-            scale : 1,
-            isPanning : false,
-            start : {x:0,y:0},
-            offset : {x:0,y:0},
+            scale : 1
+           
         }
     },
     async created() {
@@ -79,16 +79,22 @@ export default {
                 y:event.offsetY            }
             this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
             
+        },
+
+        handleClickShipDrawMode(event) {
+            let clickedPoint = {
+                x:event.offsetX,
+                y:event.offsetY           
+            }
+            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
             // set image to canvas
             if(this.drawLine.hasEnoughPointsForRectangle()){
                 let img = new Image();
                 img.src = Ship;
                 img.onload = () => {
-                    this.drawLine.pushImageToRectangleField(img);
+                    this.drawLine.pushImageToRectangleField(img,()=>this.resetCanvas());
                 }
             }
-
-
         },
 
         async setMarkPoints() {
@@ -299,11 +305,17 @@ export default {
                 this.isSketchMode = false;
                 this.isDrawLineVisible = true;
             }
+            else if(id === 5)
+            {
+                this.isDrawMode = false;
+                this.isSketchMode = false;
+                this.isDrawLineVisible = true;
+                this.isShipMode = true;
+            }
              else {
                 this.isSketchMode = false;
                 this.isDrawMode = false;
                 this.isDrawLineVisible = false;
-
             }
         },
         resetCanvas(){
@@ -347,6 +359,11 @@ export default {
                     active: false,
                 },
                 {
+                    id: 5,
+                    path: ShipIcon,
+                    active: false,
+                },
+                {
                     id: 3,
                     path: ToolbarSketchIcon,
                     active: false,
@@ -378,6 +395,7 @@ export default {
             this.$refs.homepage.style.transform = `scale(${this.scale})`;
             this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
         },
+
         
     }
 }
@@ -389,7 +407,7 @@ export default {
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"
-                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : { click: handleCanvasCursor }">
+                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : isShipMode ? {click : handleClickShipDrawMode} : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">

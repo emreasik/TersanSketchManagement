@@ -1,8 +1,6 @@
 <template>
     <div class="modal-body">
         <form>
-            <label for="">{{ inputDetails }}</label>
-            <label for="">{{ setInputDatas }}</label>
             <div class="mb-3">
                 <label for="recipient-name" class="col-form-label"> {{ modalBodyLabel }}</label>
                 <input type="text" class="form-control" v-model="inputDetails.name" @input="emitData">

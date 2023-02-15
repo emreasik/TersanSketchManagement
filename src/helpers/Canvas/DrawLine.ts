@@ -203,15 +203,13 @@ export const DrawLine = class DrawLine {
         return startPoint;
     }
 
-    pushImageToRectangleField(img:HTMLImageElement) {
-       if(this.PointHistory.length === 4){
-        console.log("pushImageToRectangleField");
-        
+    pushImageToRectangleField(img:HTMLImageElement,beforeDraw:Function) : void {
+       if(this.Edges.length === 4){
         let startPoint = this.getStartPointOfRectangle();
         let size = this.calculateWidthAndHeightOfRectangle();
         let ctx = this.getCanvasContext();
+        beforeDraw();
         ctx.drawImage(img,startPoint.x,startPoint.y,size.width,size.height);
-
        }
     }
 

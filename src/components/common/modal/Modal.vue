@@ -3,9 +3,9 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <ModalHeader :modalHeaderTitle="modalTypeDetails.modalHeaderLabel"></ModalHeader>
-                <ModalBody @input-data="emitData" :modalBodyLabel="modalTypeDetails.modalBodyLabel"
+                <ModalBody :modalBodyLabel="modalTypeDetails.modalBodyLabel"
                     :modalBodyInputSpanX="modalTypeDetails.modalBodyInputSpanX"
-                    :modalBodyInputSpanY="modalTypeDetails.modalBodyInputSpanY" :markerSvgColor="markerSvgColor"
+                    :modalBodyInputSpanY="modalTypeDetails.modalBodyInputSpanY"
                     :inputDetails="inputDetails"></ModalBody>
                 <MoodalFooter :firstButtonLabel="modalTypeDetails.modalFooterFirstButton"
                     :secondButtonLabel="modalTypeDetails.modalFooterSecondButton" :buttonFunction="footerButtonFuction"
@@ -44,19 +44,9 @@ export default {
             type: Function,
             required: true
         },
-        markerSvgColor: {
-            type: String,
-            required: true
-        },
         inputDetails: {
             type: Object,
             required: true
-        }
-    },
-    methods: {
-        emitData(buildingDetails) {
-            console.log(buildingDetails)
-            this.$emit('input-data', buildingDetails);
         }
     }
 }

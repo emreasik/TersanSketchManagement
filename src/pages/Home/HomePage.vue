@@ -19,7 +19,7 @@ import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
-import {DrawLine} from '../../helpers/Canvas';
+import { DrawLine } from '../../helpers/Canvas';
 import ModalComponent from '../../components/common/modal/Modal.vue';
 import { addBuildingLabels } from '../../components/common/modal/constants/labels.js'
 import { updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
@@ -43,7 +43,7 @@ export default {
             isSketchMode: false,
             isDrawMode: false,
             isShipMode: false,
-            drawLine:null,
+            drawLine: null,
             serviceMarkPoints: [],
             clickedPoint: {},
             sketchImage: new Image(),
@@ -54,8 +54,8 @@ export default {
             modalUpdateBuildingDetails: updateBuildingLabels(),
             isDrawLineVisible: false,
             // TODO: Move to constants
-            scale : 1
-           
+            scale: 1
+
         }
     },
     async created() {
@@ -69,32 +69,32 @@ export default {
     async mounted() {
         await this.setSketchImage();
         this.setDrawLine();
-
     },
     methods: {
-        setDrawLine(){
+        setDrawLine() {
             this.drawLine = new DrawLine(this.$refs.canvas);
         },
         handleClickDrawMode(event) {
             let clickedPoint = {
-                x:event.offsetX,
-                y:event.offsetY            }
-            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
-            
+                x: event.offsetX,
+                y: event.offsetY
+            }
+            this.drawLine.setDrawLine(clickedPoint, event.ctrlKey);
+
         },
 
         handleClickShipDrawMode(event) {
             let clickedPoint = {
-                x:event.offsetX,
-                y:event.offsetY           
+                x: event.offsetX,
+                y: event.offsetY
             }
-            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
+            this.drawLine.setDrawLine(clickedPoint, event.ctrlKey);
             // set image to canvas
-            if(this.drawLine.hasEnoughPointsForRectangle()){
+            if (this.drawLine.hasEnoughPointsForRectangle()) {
                 let img = new Image();
                 img.src = Ship;
                 img.onload = () => {
-                    this.drawLine.pushImageToRectangleField(img,()=>this.resetCanvas());
+                    this.drawLine.pushImageToRectangleField(img, () => this.resetCanvas());
                 }
             }
         },
@@ -107,15 +107,15 @@ export default {
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
 
-            
+
 
             return new Promise((resolve, reject) => {
                 this.sketchImage.onload = () => {
-                this.sketchImage.height = 1240;
-                this.sketchImage.width = 1920;
-                this.drawCanvas(this.sketchImage);
-                resolve();
-            };
+                    this.sketchImage.height = 1240;
+                    this.sketchImage.width = 1920;
+                    this.drawCanvas(this.sketchImage);
+                    resolve();
+                };
                 this.sketchImage.onerror = (err) => {
                     reject(err);
                 };
@@ -131,11 +131,6 @@ export default {
                 sketchId: 1,
             }
         },
-        setBuildingDetailsFromModalComponent(updateBuildingData) {
-            console.log(updateBuildingData);
-            this.buildingDetailsForUpdate = updateBuildingData;
-            console.log(this.buildingDetailsForUpdate);
-        },
         setInitialClickIcons() {
             this.locationMapIcon.src = LocationMapIcon;
             this.locationMapIconClicked.src = LocationMapIconClicked;
@@ -147,6 +142,7 @@ export default {
             const y = event.offsetY;
             //find the point o canvas
             console.log(x, y);
+            console.log(this.buildingDetailsForUpdate);
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -162,16 +158,14 @@ export default {
         },
         openUpdateModal() {
             this.openModal(this.$refs.UpdateModalComponent.$el);
-            this.updateBuildingVariables();
+            this.updateBuildingVariablesWhenUpdateModalOpen();
         },
-        updateBuildingVariables() {
+        updateBuildingVariablesWhenUpdateModalOpen() {
             console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
             const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
             console.log(building);
-            this.buildingDetailsForUpdate.id = building.id;
-            this.buildingDetailsForUpdate.name = building.name;
-            this.buildingDetailsForUpdate.x = building.x;
-            this.buildingDetailsForUpdate.y = building.y;
+            this.buildingDetailsForUpdate = { ...building };
+
             console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
         },
         async addNewBuilding() {
@@ -284,6 +278,7 @@ export default {
 
             this.markPoints.forEach(point => {
                 const img = new Image();
+                const hexColorCode = point.hexColorCode;
                 const x = point.x;
                 const y = point.y;
                 const svg = `
@@ -334,20 +329,19 @@ export default {
                 this.isSketchMode = false;
                 this.isDrawLineVisible = true;
             }
-            else if(id === 5)
-            {
+            else if (id === 5) {
                 this.isDrawMode = false;
                 this.isSketchMode = false;
                 this.isDrawLineVisible = true;
                 this.isShipMode = true;
             }
-             else {
+            else {
                 this.isSketchMode = false;
                 this.isDrawMode = false;
                 this.isDrawLineVisible = false;
             }
         },
-        resetCanvas(){
+        resetCanvas() {
             if (this.drawLine.reset()) {
                 this.canvasRefresh();
             }
@@ -383,7 +377,7 @@ export default {
                     active: false
                 },
                 {
-                    id : 4,
+                    id: 4,
                     path: ToolBarCreateRestrictionIcon,
                     active: false,
                 },
@@ -415,28 +409,28 @@ export default {
             event.preventDefault();
             if (event.deltaY > 0 && this.scale > 1) {
                 this.scale -= 0.1;
-            } else if(event.deltaY < 0 ) {
+            } else if (event.deltaY < 0) {
                 this.scale += 0.1;
             }
-            else{
+            else {
                 this.scale = 1;
             }
             this.$refs.homepage.style.transform = `scale(${this.scale})`;
             this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
         },
 
-        
+
     }
 }
 </script>
 
 <template>
     <div class="home-page">
-        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas"/>
+        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas" />
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"
-                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : isShipMode ? {click : handleClickShipDrawMode} : { click: handleCanvasCursor }">
+                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? { click: handleClickDrawMode } : isShipMode ? { click: handleClickShipDrawMode } : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">
@@ -455,10 +449,9 @@ export default {
             </div>
         </div>
     </div>
-    <ModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails" :markerSvgColor="markerColor"
-        :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding"></ModalComponent>
-    <ModalComponent ref="UpdateModalComponent" @input-data="setBuildingDetailsFromModalComponent"
-        :modalTypeDetails="modalUpdateBuildingDetails" :markerSvgColor="markerColor"
+    <ModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails" :inputDetails="buildingDetails"
+        :footerButtonFuction="addNewBuilding"></ModalComponent>
+    <ModalComponent ref="UpdateModalComponent" :modalTypeDetails="modalUpdateBuildingDetails"
         :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
         :footerDeleteButtonFuction="deleteBuilding">
     </ModalComponent>

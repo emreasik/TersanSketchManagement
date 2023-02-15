@@ -3,29 +3,30 @@
         <form>
             <div class="mb-3">
                 <label for="recipient-name" class="col-form-label"> {{ modalBodyLabel }}</label>
-                <input type="text" class="form-control" v-model="inputDetails.name" @input="emitData">
+                <input type="text" class="form-control" v-model="inputDetails.name">
             </div>
             <div class="mb-3">
                 <div class="d-flex gap-3">
                     <div class="d-flex input-group flex-nowrap">
                         <span class="input-group-text " id="addon-wrapping">{{ modalBodyInputSpanX }}</span>
-                        <input type="text" class="form-control shadow-none" v-model="inputDetails.x" @input="emitData"
+                        <input type="text" class="form-control shadow-none" v-model="inputDetails.x"
                             aria-label="Username" aria-describedby="addon-wrapping">
                     </div>
                     <div class="d-flex input-group flex-nowrap">
                         <span class="input-group-text" id="addon-wrapping"> {{ modalBodyInputSpanY }}</span>
-                        <input type="text" class="form-control shadow-none" v-model="inputDetails.y" @input="emitData"
+                        <input type="text" class="form-control shadow-none" v-model="inputDetails.y"
                             aria-label="Username" aria-describedby="addon-wrapping">
                     </div>
                 </div>
             </div>
             <div class="svg-color-container">
                 <div class="svg-color-container__marker">
-                    <SketchMarkerIcon :svgColor="inputDetails.hexColorCode" class="svg-color-container__marker__svg-component"/>
+                    <SketchMarkerIcon :svgColor="inputDetails.hexColorCode"
+                        class="svg-color-container__marker__svg-component" />
                 </div>
                 <div class="svg-color-container__picker">
-                    <input class="svg-color-container__picker__input" v-model="inputDetails.hexColorCode" type="color" id="favcolor"
-                        name="favcolor" />
+                    <input class="svg-color-container__picker__input" v-model="inputDetails.hexColorCode" type="color"
+                        id="favcolor" name="favcolor" />
                 </div>
             </div>
         </form>
@@ -37,17 +38,6 @@ import SketchMarkerIcon from '../../../assets/icons/SketchMarkerIconSVG.vue';
 
 export default {
     name: 'ModalBody',
-    data() {
-        return {
-            markerColor: this.markerSvgColor,
-            inputs: {}
-        }
-    },
-    computed: {
-        setInputDatas() {
-            return this.inputs = this.inputDetails;
-        }
-    },
     components: {
         SketchMarkerIcon,
     },
@@ -64,25 +54,16 @@ export default {
             type: String,
             required: true
         },
-        markerSvgColor: {
-            type: String,
-            required: true
-        },
         inputDetails: {
             type: Object,
             required: true
         }
-    },
-    methods: {
-        emitData() {
-            this.$emit('inputData', this.inputs);
-        }
-    },
+    }
 }
 </script>
 
 <style>
-.svg-color-container__marker__svg-component{
+.svg-color-container__marker__svg-component {
     margin: 5px;
     width: 70px;
     height: 70px;

@@ -13,31 +13,24 @@ export default class ShipService {
     }
 
     async addShip(shipData) {
-        await this.fetcher.port("/Ship", {
-            name: shipData.name,
-            shipStatusID: shipData.shipStatusID,
-            x: shipData.x,
-            y: shipData.y,
-            sketchId: shipData.sketchId,
-            hexColorCode: shipData.hexColorCode,
-        });
+        let result = await this.fetcher.post("/Ship", {
+            ...shipData,
+            hexColorCode: "#ffffff",
+            sketchId: 1
+        }
+        );
         return result.data
     }
 
     async updateShip(updateShipData) {
-        await this.fetcher.put("/Ship", {
-            id: updateShipData.id,
-            name: updateShipData.name,
-            shipStatusType: updateShipData.shipStatusType,
-            x: updateShipData.x,
-            y: updateShipData.y,
-            hexColorCode: updateShipData.hexColorCode,
+        let result = await this.fetcher.put("/Ship", {
+            ...updateShipData
         });
         return result.data
     }
 
     async deleteShip(shipId) {
-        await this.fetcher.delete("/Ship", {
+        let result = await this.fetcher.delete("/Ship", {
             params: {
                 id: shipId
             }

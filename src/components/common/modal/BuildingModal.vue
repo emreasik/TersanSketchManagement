@@ -2,31 +2,31 @@
     <div class="modal fade" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <ModalHeader :modalHeaderTitle="modalTypeDetails.modalHeaderLabel"></ModalHeader>
-                <ModalBody :modalBodyLabel="modalTypeDetails.modalBodyLabel"
+                <BuildingModalHeader :modalHeaderTitle="modalTypeDetails.modalHeaderLabel"></BuildingModalHeader>
+                <BuildingModalBody :modalBodyLabel="modalTypeDetails.modalBodyLabel"
                     :modalBodyInputSpanX="modalTypeDetails.modalBodyInputSpanX"
-                    :modalBodyInputSpanY="modalTypeDetails.modalBodyInputSpanY"
-                    :inputDetails="inputDetails"></ModalBody>
-                <MoodalFooter :firstButtonLabel="modalTypeDetails.modalFooterFirstButton"
+                    :modalBodyInputSpanY="modalTypeDetails.modalBodyInputSpanY" :inputDetails="inputDetails">
+                </BuildingModalBody>
+                <BuildingMoodalFooter :firstButtonLabel="modalTypeDetails.modalFooterFirstButton"
                     :secondButtonLabel="modalTypeDetails.modalFooterSecondButton" :buttonFunction="footerButtonFuction"
                     :buttonDeleteFunction="footerDeleteButtonFuction">
-                </MoodalFooter>
+                </BuildingMoodalFooter>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import ModalHeader from './ModalHeader.vue';
-import ModalBody from './ModalBody.vue';
-import MoodalFooter from './ModalFooter.vue';
+import BuildingModalHeader from './BuildingModalHeader.vue';
+import BuildingModalBody from './BuildingModalBody.vue';
+import BuildingMoodalFooter from './BuildingModalFooter.vue';
 
 export default {
-    name: 'ModalComponent',
+    name: 'BuildingModalComponent',
     components: {
-        ModalHeader,
-        ModalBody,
-        MoodalFooter
+        BuildingModalHeader,
+        BuildingModalBody,
+        BuildingMoodalFooter
     },
     created() {
         console.log(this.inputDetails);

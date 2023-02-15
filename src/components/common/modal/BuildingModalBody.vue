@@ -36,7 +36,7 @@
 import SketchMarkerIcon from '../../../assets/icons/SketchMarkerIconSVG.vue';
 
 export default {
-    name: 'ModalBody',
+    name: 'BuildingModalBody',
     data() {
         return {
             markerColor: this.markerSvgColor,

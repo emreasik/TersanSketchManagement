@@ -7,7 +7,7 @@
 
 <script>
 export default {
-    name: 'ModalHeader',
+    name: 'BuildingModalHeader',
     props: {
         modalHeaderTitle: {
             type: String,

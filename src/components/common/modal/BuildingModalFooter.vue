@@ -11,7 +11,7 @@
 
 <script>
 export default {
-    name: 'ModalFooter',
+    name: 'BuildingModalFooter',
     props: {
         firstButtonLabel: {
             type: String,

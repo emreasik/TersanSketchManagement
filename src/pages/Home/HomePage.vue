@@ -1,10 +1,14 @@
 <script>
 import Toolbar from '../../components/common/appItems/Toolbar/Toolbar.vue'
+import DrawLineSettingsBar from '../../components/common/appItems/DrawLineItems/DrawLineSettingsBar.vue';
 import ToolbarLocationIcon from '../../assets/icons/location_marker_icon.png';
 import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
 import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
 import ToolbarAddIcon from '../../assets/icons/add_icon.png';
 import ToolbarListIcon from '../../assets/icons/list_icon.png';
+import ShipIcon from '../../assets/icons/shipIcon.png';
+import Ship from '../../assets/icons/ship.png';
+import ToolBarCreateRestrictionIcon from '../../assets/icons/create_restriction_icon.png';
 
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
 import LocationMapIconClicked from '../../assets/icons/location_map_icon_clicked.png';
@@ -15,16 +19,19 @@ import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
+import {DrawLine} from '../../helpers/Canvas';
 import ModalComponent from '../../components/common/modal/Modal.vue';
 import { addBuildingLabels } from '../../components/common/modal/constants/labels.js'
 import { updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
+
 
 export default {
     name: 'HomePage',
     components: {
         Toolbar,
         SketchMarkerIcon,
-        ModalComponent
+        ModalComponent,
+        DrawLineSettingsBar
     },
     data() {
         return {
@@ -34,6 +41,9 @@ export default {
             buildingDetailsForUpdate: {},
             markPoints: [],
             isSketchMode: false,
+            isDrawMode: false,
+            isShipMode: false,
+            drawLine:null,
             serviceMarkPoints: [],
             clickedPoint: {},
             sketchImage: new Image(),
@@ -42,11 +52,10 @@ export default {
             markerColor: "#E74C3C",
             modalAddBuildingDetails: addBuildingLabels(),
             modalUpdateBuildingDetails: updateBuildingLabels(),
+            isDrawLineVisible: false,
             // TODO: Move to constants
-            scale: 1,
-            isPanning: false,
-            start: { x: 0, y: 0 },
-            offset: { x: 0, y: 0 },
+            scale : 1
+           
         }
     },
     async created() {
@@ -57,22 +66,60 @@ export default {
         await this.setMarkPoints();
         this.setInitialClickIcons();
     },
-    mounted() {
-        this.setSketchImage();
+    async mounted() {
+        await this.setSketchImage();
+        this.setDrawLine();
+
     },
     methods: {
+        setDrawLine(){
+            this.drawLine = new DrawLine(this.$refs.canvas);
+        },
+        handleClickDrawMode(event) {
+            let clickedPoint = {
+                x:event.offsetX,
+                y:event.offsetY            }
+            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
+            
+        },
+
+        handleClickShipDrawMode(event) {
+            let clickedPoint = {
+                x:event.offsetX,
+                y:event.offsetY           
+            }
+            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
+            // set image to canvas
+            if(this.drawLine.hasEnoughPointsForRectangle()){
+                let img = new Image();
+                img.src = Ship;
+                img.onload = () => {
+                    this.drawLine.pushImageToRectangleField(img,()=>this.resetCanvas());
+                }
+            }
+        },
+
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
             this.drawMarkPoints()
+
         },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
 
-            this.sketchImage.onload = () => {
+            
+
+            return new Promise((resolve, reject) => {
+                this.sketchImage.onload = () => {
                 this.sketchImage.height = 1240;
                 this.sketchImage.width = 1920;
                 this.drawCanvas(this.sketchImage);
+                resolve();
             };
+                this.sketchImage.onerror = (err) => {
+                    reject(err);
+                };
+            });
         },
         setInitialBuildingDetails() {
             this.buildingDetails = {
@@ -125,7 +172,6 @@ export default {
             this.buildingDetailsForUpdate.name = building.name;
             this.buildingDetailsForUpdate.x = building.x;
             this.buildingDetailsForUpdate.y = building.y;
-            this.buildingDetailsForUpdate.hexColorCode = building.hexColorCode
             console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
         },
         async addNewBuilding() {
@@ -175,7 +221,6 @@ export default {
             }
         },
         canvasRefresh() {
-            console.log(this.markPoints);
             this.drawCanvas(this.sketchImage);
             this.drawMarkPoints();
         },
@@ -280,9 +325,31 @@ export default {
                 icon.active = icon.id === id;
             });
             if (id === 2) {
+                this.isDrawMode = false;
                 this.isSketchMode = true;
-            } else {
+                this.isDrawLineVisible = false;
+            }
+            else if (id === 4) {
+                this.isDrawMode = true;
                 this.isSketchMode = false;
+                this.isDrawLineVisible = true;
+            }
+            else if(id === 5)
+            {
+                this.isDrawMode = false;
+                this.isSketchMode = false;
+                this.isDrawLineVisible = true;
+                this.isShipMode = true;
+            }
+             else {
+                this.isSketchMode = false;
+                this.isDrawMode = false;
+                this.isDrawLineVisible = false;
+            }
+        },
+        resetCanvas(){
+            if (this.drawLine.reset()) {
+                this.canvasRefresh();
             }
         },
         successToastAdd(constructorType) {
@@ -316,6 +383,16 @@ export default {
                     active: false
                 },
                 {
+                    id : 4,
+                    path: ToolBarCreateRestrictionIcon,
+                    active: false,
+                },
+                {
+                    id: 5,
+                    path: ShipIcon,
+                    active: false,
+                },
+                {
                     id: 3,
                     path: ToolbarSketchIcon,
                     active: false,
@@ -338,46 +415,28 @@ export default {
             event.preventDefault();
             if (event.deltaY > 0 && this.scale > 1) {
                 this.scale -= 0.1;
-            } else if (event.deltaY < 0) {
+            } else if(event.deltaY < 0 ) {
                 this.scale += 0.1;
             }
-            else {
+            else{
                 this.scale = 1;
             }
             this.$refs.homepage.style.transform = `scale(${this.scale})`;
             this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
         },
-        // panStart(event) {
-        //     event.preventDefault();
-        //     this.isPanning = true;
-        //     this.start.x = event.clientX - this.offset.x;
-        //     this.start.y = event.clientY - this.offset.y;
-        // },
-        // panMove(event) {
-        //     //pan limit
-        //     if (this.offset.x > 0 || this.offset.y > 0) {
-        //         this.offset.x = 0;
-        //         this.offset.y = 0;
-        //     }
-        //     if (!this.isPanning) return; // Do nothing
-        //     this.offset.x = event.clientX - this.start.x;
-        //     this.offset.y = event.clientY - this.start.y;
-        //     this.$refs.homepage.style.translate = `${ this.offset.x }px ${ this.offset.y } px`;
-        // },
-        // panEnd(event) {
-        //     this.isPanning = false;
-        // },
 
+        
     }
 }
 </script>
 
 <template>
     <div class="home-page">
+        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas"/>
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"
-                v-on="isSketchMode ? { click: handleCanvasClick } : { click: handleCanvasCursor }">
+                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : isShipMode ? {click : handleClickShipDrawMode} : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">
@@ -410,7 +469,6 @@ export default {
 
 body {
     margin: 0;
-    overflow-x: hidden;
 }
 
 

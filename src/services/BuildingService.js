@@ -20,7 +20,6 @@ export default class BuildingService {
         }).catch(error => {
             console.log(error);
         });
-
         return result.data;
     }
     async updateBuilding(updateBuildingData) {
@@ -44,3 +43,5 @@ export default class BuildingService {
         return result.data;
     }
 }
+
+

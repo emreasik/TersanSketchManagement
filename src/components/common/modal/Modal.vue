@@ -2,7 +2,6 @@
     <div class="modal fade" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <label for="">{{ inputDetails }}</label>
                 <ModalHeader :modalHeaderTitle="modalTypeDetails.modalHeaderLabel"></ModalHeader>
                 <ModalBody @input-data="emitData" :modalBodyLabel="modalTypeDetails.modalBodyLabel"
                     :modalBodyInputSpanX="modalTypeDetails.modalBodyInputSpanX"

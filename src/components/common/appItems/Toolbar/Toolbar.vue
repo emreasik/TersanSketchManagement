@@ -53,12 +53,12 @@ export default {
 .tool-button {
     display: flex;
     flex-direction: column;
-    padding: 5px;
     position: fixed;
-    bottom: 40vh;
-    right: 0;
-    margin-right: 10px;
+    top: 50%;
+    right: 1%;
     gap: 10px;
+    transform: translate(0, -50%);
+    
     // TODO 2 item gelince ortalama fixle
     z-index: 1;
 }

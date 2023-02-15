@@ -99,7 +99,6 @@ export const DrawLine = class DrawLine {
             // ctrl pressed
             if  (this.isNearToExistingCircle(point,eventPoint) && pressedCtrl)
             {
-                console.log("near to existing circle also pressed ctrl");
                 this.setPreviousPointCoordinates(this.CurrentDrawPoint.x,this.CurrentDrawPoint.y);
                 this.drawCirleAndFill({x:this.CurrentDrawPoint.x,y:this.CurrentDrawPoint.y},this.Colors.circleColor,this.Colors.borderColor,2);
                 // this.drawLine.setCurrentPointToPreviousPoint();
@@ -109,8 +108,6 @@ export const DrawLine = class DrawLine {
                 return;
             }
             else if(this.isNearToExistingCircle(point,eventPoint)) {
-                console.log(point);
-                console.log(eventPoint);
                 this.PreviousDrawPoint.x = 0;
                 this.PreviousDrawPoint.y = 0;
                 this.drawCirleAndFill({x:this.CurrentDrawPoint.x,y:this.CurrentDrawPoint.y},this.Colors.circleColor,this.Colors.borderColor,2);
@@ -173,7 +170,6 @@ export const DrawLine = class DrawLine {
     }
     calculateWidthAndHeightOfRectangle() : RectSize {
         let points = this.detectRectanglePoints();
-        console.log(points);
         
         this.drawRectangle();
         let size:RectSize = new RectSize(0,0);
@@ -213,8 +209,11 @@ export const DrawLine = class DrawLine {
        }
     }
 
-    hasEnoughPointsForRectangle() : boolean {
-        return this.PointHistory.length === 4;
+    hasEnoughEdgesForRectangle() : boolean {
+        let result = this.Edges.filter((edge) => edge.from.x === this.PointHistory[0].x && edge.from.y === this.PointHistory[0].y ||
+                edge.to.x === this.PointHistory[0].x && edge.to.y === this.PointHistory[0].y)
+
+        return this.Edges.length === 4 && result.length === 2;
     }
 
     checkPointsExist() : boolean {
@@ -225,7 +224,6 @@ export const DrawLine = class DrawLine {
     drawRectangle() : void {
             if(this.PointHistory.length === 4){
                 let points = this.detectRectanglePoints();
-                console.log(points);
                 
             if(points.length === 4)
             {
@@ -268,9 +266,7 @@ export const DrawLine = class DrawLine {
                         biggest.y = point.y;
                     }
                 })
-                console.log(smallest);
 
-                console.log(biggest);
                 points = this.createRectanglePoints(smallest,biggest);
                 }
 

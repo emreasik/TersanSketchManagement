@@ -12,15 +12,16 @@ import ToolBarCreateRestrictionIcon from '../../assets/icons/create_restriction_
 
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
 import LocationMapIconClicked from '../../assets/icons/location_map_icon_clicked.png';
-import { buildingService } from '../../services/ApiService.js';
+import { buildingService, shipService } from '../../services/ApiService.js';
 import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
-import {DrawLine} from '../../helpers/Canvas';
-import ModalComponent from '../../components/common/modal/Modal.vue';
-import { addBuildingLabels } from '../../components/common/modal/constants/labels.js'
-import { updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
+import { DrawLine } from '../../helpers/Canvas';
+import BuildingModalComponent from '../../components/common/modal/BuildingModal.vue';
+import ModalComponent from '../../components/common/modal/Common/Modal.vue';
+import ShipAddContent from '../../components/common/modal/ShipAddContent.vue';
+import { addBuildingLabels, updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
 
 
 export default {
@@ -28,8 +29,10 @@ export default {
     components: {
         Toolbar,
         SketchMarkerIcon,
+        BuildingModalComponent,
+        DrawLineSettingsBar,
         ModalComponent,
-        DrawLineSettingsBar
+        ShipAddContent
     },
     data() {
         return {
@@ -41,7 +44,7 @@ export default {
             isSketchMode: false,
             isDrawMode: false,
             isShipMode: false,
-            drawLine:null,
+            drawLine: null,
             serviceMarkPoints: [],
             clickedPoint: {},
             sketchImage: new Image(),
@@ -52,8 +55,10 @@ export default {
             modalUpdateBuildingDetails: updateBuildingLabels(),
             isDrawLineVisible: false,
             // TODO: Move to constants
-            scale : 1
-           
+            scale: 1,
+            shipModel: {},
+            ships: [],
+
         }
     },
     async created() {
@@ -63,6 +68,7 @@ export default {
         this.setInitialBuildingDetails();
         await this.setMarkPoints();
         this.setInitialClickIcons();
+        await this.setShips();
     },
     async mounted() {
         await this.setSketchImage();
@@ -70,30 +76,29 @@ export default {
 
     },
     methods: {
-        setDrawLine(){
+        setDrawLine() {
             this.drawLine = new DrawLine(this.$refs.canvas);
         },
         handleClickDrawMode(event) {
             let clickedPoint = {
-                x:event.offsetX,
-                y:event.offsetY            }
-            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
-            
+                x: event.offsetX,
+                y: event.offsetY
+            }
+            this.drawLine.setDrawLine(clickedPoint, event.ctrlKey);
+
         },
 
         handleClickShipDrawMode(event) {
             let clickedPoint = {
-                x:event.offsetX,
-                y:event.offsetY           
+                x: event.offsetX,
+                y: event.offsetY
             }
-            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
+            this.drawLine.setDrawLine(clickedPoint, event.ctrlKey);
             // set image to canvas
-            if(this.drawLine.hasEnoughPointsForRectangle()){
-                let img = new Image();
-                img.src = Ship;
-                img.onload = () => {
-                    this.drawLine.pushImageToRectangleField(img,()=>this.resetCanvas());
-                }
+            if (this.drawLine.hasEnoughEdgesForRectangle()) {
+                console.log("has enough points");
+                this.openModal(this.$refs.AddShipModalComponent.$el);
+
             }
         },
 
@@ -102,18 +107,22 @@ export default {
             this.drawMarkPoints()
 
         },
+        async setShips() {
+            this.ships = (await shipService.getShips()).data;
+            this.drawShips();
+        },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
 
-            
+
 
             return new Promise((resolve, reject) => {
                 this.sketchImage.onload = () => {
-                this.sketchImage.height = 1240;
-                this.sketchImage.width = 1920;
-                this.drawCanvas(this.sketchImage);
-                resolve();
-            };
+                    this.sketchImage.height = 1240;
+                    this.sketchImage.width = 1920;
+                    this.drawCanvas(this.sketchImage);
+                    resolve();
+                };
                 this.sketchImage.onerror = (err) => {
                     reject(err);
                 };
@@ -221,6 +230,7 @@ export default {
         canvasRefresh() {
             this.drawCanvas(this.sketchImage);
             this.drawMarkPoints();
+            this.drawShips();
         },
         async deleteBuilding() {
             let result = await buildingService.deleteBuilding(this.buildingDetails.id);
@@ -277,6 +287,21 @@ export default {
                 });
             }
         },
+        drawShips() {
+            const canvas = this.$refs.canvas;
+            const ctx = canvas.getContext('2d');
+
+            const img = new Image();
+            img.src = Ship;
+
+
+            img.onload = () => {
+                this.ships.forEach(ship => {
+                    console.log(ship);
+                    ctx.drawImage(img, ship.x, ship.y, ship.width, ship.height);
+                });
+            }
+        },
         drawCanvas(image) {
             const canvas = this.$refs.canvas;
             canvas.height = image.height;
@@ -299,26 +324,28 @@ export default {
                 this.isDrawMode = false;
                 this.isSketchMode = true;
                 this.isDrawLineVisible = false;
+                this.isShipMode = false;
             }
             else if (id === 4) {
                 this.isDrawMode = true;
                 this.isSketchMode = false;
+                this.isShipMode = false;
                 this.isDrawLineVisible = true;
             }
-            else if(id === 5)
-            {
+            else if (id === 5) {
                 this.isDrawMode = false;
                 this.isSketchMode = false;
                 this.isDrawLineVisible = true;
                 this.isShipMode = true;
             }
-             else {
+            else {
+                this.isShipMode = false;
                 this.isSketchMode = false;
                 this.isDrawMode = false;
                 this.isDrawLineVisible = false;
             }
         },
-        resetCanvas(){
+        resetCanvas() {
             if (this.drawLine.reset()) {
                 this.canvasRefresh();
             }
@@ -354,7 +381,7 @@ export default {
                     active: false
                 },
                 {
-                    id : 4,
+                    id: 4,
                     path: ToolBarCreateRestrictionIcon,
                     active: false,
                 },
@@ -386,28 +413,54 @@ export default {
             event.preventDefault();
             if (event.deltaY > 0 && this.scale > 1) {
                 this.scale -= 0.1;
-            } else if(event.deltaY < 0 ) {
+            } else if (event.deltaY < 0) {
                 this.scale += 0.1;
             }
-            else{
+            else {
                 this.scale = 1;
             }
             this.$refs.homepage.style.transform = `scale(${this.scale})`;
             this.$refs.homepage.style.transformOrigin = event.pageX + 'px ' + event.pageY + 'px';
         },
+        async addShip() {
+            let img = new Image();
+            img.src = Ship;
 
-        
+            let startPoint = this.drawLine.getStartPointOfRectangle();
+            let size = this.drawLine.calculateWidthAndHeightOfRectangle();
+            img.onload = () => {
+                this.drawLine.pushImageToRectangleField(img, () => this.resetCanvas());
+            }
+            let result = await shipService.addShip({
+                ...this.shipModel,
+                ...startPoint,
+                ...size
+            });
+
+            this.ships.push(result);
+
+            
+            
+
+           
+            this.shipModel = {};
+        },
+        cancelAddShip() {
+            console.log('cancel');
+            this.shipModel = {};
+        },
+
     }
 }
 </script>
 
 <template>
     <div class="home-page">
-        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas"/>
+        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas" />
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"
-                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : isShipMode ? {click : handleClickShipDrawMode} : { click: handleCanvasCursor }">
+                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? { click: handleClickDrawMode } : isShipMode ? { click: handleClickShipDrawMode } : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">
@@ -426,12 +479,17 @@ export default {
             </div>
         </div>
     </div>
-    <ModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails" :markerSvgColor="markerColor"
-        :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding"></ModalComponent>
-    <ModalComponent ref="UpdateModalComponent" @input-data="setBuildingDetailsFromModalComponent"
+    <BuildingModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails"
+        :markerSvgColor="markerColor" :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding">
+    </BuildingModalComponent>
+    <BuildingModalComponent ref="UpdateModalComponent" @input-data="setBuildingDetailsFromModalComponent"
         :modalTypeDetails="modalUpdateBuildingDetails" :markerSvgColor="markerColor"
         :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
         :footerDeleteButtonFuction="deleteBuilding">
+    </BuildingModalComponent>
+    <ModalComponent ref="AddShipModalComponent" :title="'deneme'" @save="addShip()" @cancel="cancelAddShip()">
+        <ShipAddContent :shipModel="shipModel" />
+
     </ModalComponent>
 </template>
 

@@ -268,7 +268,7 @@ export default {
                     card.classList.remove('d-none');
                     isClickedOnPoint = true;
                     this.clickedPoint = point;
-                    this.decideCardPosition(20, 25,3);
+                    this.decideCardPosition(20, 25,3,3);
 
                     // update building Id
                     this.buildingDetails.id = point.id;
@@ -286,7 +286,7 @@ export default {
                         x: ship.x,
                         y: ship.y
                     }
-                    this.decideCardPosition(ship.width, ship.height,3);
+                    this.decideCardPosition(ship.width, ship.height,3,2.3);
                     card.classList.remove('d-none');
                 } else {
                 }
@@ -296,19 +296,19 @@ export default {
             });
         },
 
-        decideCardPosition(x,y,factor) {
+        decideCardPosition(x,y,xFactor,yFactor) {
             let left = this.clickedPoint.x + x;
             let top = this.clickedPoint.y + y;
             let card = document.querySelector('.card');
             
             if(left + 100 > import.meta.env.VITE_APP_SCREEN_WIDTH) {
                 
-                left = this.clickedPoint.x - 100*factor;
+                left = this.clickedPoint.x - 100*xFactor;
                
             }
-            if(top + 100 > import.meta.env.VITE_APP_SCREEN_HEIGHT){
+            if(top + 250 > import.meta.env.VITE_APP_SCREEN_HEIGHT){
 
-                    top = this.clickedPoint.y - 100*factor;
+                    top = this.clickedPoint.y - 100*yFactor;
             }
             this.setCardPosition(card, left, top);
             

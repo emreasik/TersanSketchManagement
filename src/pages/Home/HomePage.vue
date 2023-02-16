@@ -7,19 +7,25 @@ import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
 import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
 import ToolbarAddIcon from '../../assets/icons/add_icon.png';
 import ToolbarListIcon from '../../assets/icons/list_icon.png';
+import ShipIcon from '../../assets/icons/shipIcon.png';
+import Ship from '../../assets/icons/ship.png';
 import ToolBarCreateRestrictionIcon from '../../assets/icons/create_restriction_icon.png';
 
 import LocationMapIcon from '../../assets/icons/location_map_icon.png';
 import LocationMapIconClicked from '../../assets/icons/location_map_icon_clicked.png';
-import { buildingService } from '../../services/ApiService.js';
+import { buildingService, shipService } from '../../services/ApiService.js';
 import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
+import { fillSvgColor, svgConvertToBase64 } from '../../helpers/Svg/svgConstants.js'
+
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
-import {DrawLine} from '../../helpers/Canvas';
-import ModalComponent from '../../components/common/modal/Modal.vue';
-import { addBuildingLabels } from '../../components/common/modal/constants/labels.js'
-import { updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
+import { DrawLine } from '../../helpers/Canvas';
+import BuildingModalComponent from '../../components/common/modal/BuildingModal.vue';
+import ModalComponent from '../../components/common/modal/Common/Modal.vue';
+import ShipAddContent from '../../components/common/modal/ShipAddContent.vue';
+import { addBuildingLabels, updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
+
 
 
 export default {
@@ -27,9 +33,12 @@ export default {
     components: {
         Toolbar,
         SketchMarkerIcon,
+        BuildingModalComponent,
+        DrawLineSettingsBar,
         ModalComponent,
         DrawLineSettingsBar,
-        ScrollButton
+        ScrollButton,
+        ShipAddContent
     },
     data() {
         return {
@@ -38,9 +47,11 @@ export default {
             buildingDetails: {},
             buildingDetailsForUpdate: {},
             markPoints: [],
+            previousMarkPoint: {},
             isSketchMode: false,
             isDrawMode: false,
-            drawLine:null,
+            isShipMode: false,
+            drawLine: null,
             serviceMarkPoints: [],
             clickedPoint: {},
             sketchImage: new Image(),
@@ -56,50 +67,78 @@ export default {
             start : {x:0,y:0},
             offset : {x:0,y:0},
             currentScrollInterval: null,
+            scale: 1,
+            shipModel: {
+                name: '',
+                shipStatusId: 1
+            },
+            ships: [],
+
         }
     },
-    async created() {
+    created() {
         //init
         this.setInitialIcons();
         this.setInitialSketchIcons();
         this.setInitialBuildingDetails();
-        await this.setMarkPoints();
-        this.setInitialClickIcons();
     },
     async mounted() {
         await this.setSketchImage();
         this.setDrawLine();
-
+        await this.setMarkPoints();
+        this.setInitialClickIcons();
+        await this.setShips();
     },
     methods: {
-        setDrawLine(){
+        setDrawLine() {
             this.drawLine = new DrawLine(this.$refs.canvas);
         },
         handleClickDrawMode(event) {
             let clickedPoint = {
-                x:event.offsetX,
-                y:event.offsetY
+                x: event.offsetX,
+                y: event.offsetY
             }
-            this.drawLine.setDrawLine(clickedPoint,event.ctrlKey);
+            this.drawLine.setDrawLine(clickedPoint, event.ctrlKey);
 
+        },
+
+        handleClickShipDrawMode(event) {
+            let clickedPoint = {
+                x: event.offsetX,
+                y: event.offsetY
+            }
+            this.drawLine.setDrawLine(clickedPoint, event.ctrlKey);
+            // set image to canvas
+            if (this.drawLine.hasEnoughEdgesForRectangle()) {
+                console.log("has enough points");
+                this.openModal(this.$refs.AddShipModalComponent.$el);
+
+            }
         },
 
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
-            this.drawMarkPoints()
+            // this.markPoints.forEach((markPoint) => {
+            //     let image = new Image();
+            //     image.src = svgConvertToBase64(markPoint.hexColorCode);
+            //     markPoint.hexColorCodeImage = image;
+            // });
+            this.drawMarkPoints();
+        },
+        async setShips() {
+            this.ships = (await shipService.getShips()).data;
+            this.drawShips();
         },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
 
-            
-
             return new Promise((resolve, reject) => {
                 this.sketchImage.onload = () => {
-                this.sketchImage.height = 1240;
-                this.sketchImage.width = 1920;
-                this.drawCanvas(this.sketchImage);
-                resolve();
-            };
+                    this.sketchImage.height = import.meta.env.VITE_APP_SCREEN_HEIGHT;
+                    this.sketchImage.width = import.meta.env.VITE_APP_SCREEN_WIDTH;
+                    this.drawCanvas(this.sketchImage);
+                    resolve();
+                };
                 this.sketchImage.onerror = (err) => {
                     reject(err);
                 };
@@ -111,13 +150,9 @@ export default {
                 name: '',
                 x: 0,
                 y: 0,
+                hexColorCode: this.markerColor,
                 sketchId: 1,
             }
-        },
-        setBuildingDetailsFromModalComponent(updateBuildingData) {
-            console.log(updateBuildingData);
-            this.buildingDetailsForUpdate = updateBuildingData;
-            console.log(this.buildingDetailsForUpdate);
         },
         setInitialClickIcons() {
             this.locationMapIcon.src = LocationMapIcon;
@@ -130,8 +165,7 @@ export default {
             const y = event.offsetY;
             //find the point o canvas
             console.log(x, y);
-            
-
+            console.log(this.buildingDetailsForUpdate);
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -147,17 +181,11 @@ export default {
         },
         openUpdateModal() {
             this.openModal(this.$refs.UpdateModalComponent.$el);
-            this.updateBuildingVariables();
+            this.updateBuildingVariablesWhenUpdateModalOpen();
         },
-        updateBuildingVariables() {
-            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
+        updateBuildingVariablesWhenUpdateModalOpen() {
             const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
-            console.log(building);
-            this.buildingDetailsForUpdate.id = building.id;
-            this.buildingDetailsForUpdate.name = building.name;
-            this.buildingDetailsForUpdate.x = building.x;
-            this.buildingDetailsForUpdate.y = building.y;
-            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
+            this.buildingDetailsForUpdate = { ...building };
         },
         async addNewBuilding() {
             let result = await buildingService.addBuilding(this.buildingDetails);
@@ -167,6 +195,7 @@ export default {
                     name: result.name,
                     x: result.x,
                     y: result.y,
+                    hexColorCode: result.hexColorCode
                 });
                 this.drawMarkPoints();
                 this.buildingDetails = {
@@ -174,6 +203,7 @@ export default {
                     name: '',
                     x: 0,
                     y: 0,
+                    hexColorCode: this.markerColor,
                     sketchId: 1,
                 };
                 this.successToastAdd('Bina');
@@ -191,6 +221,7 @@ export default {
                     name: result.name,
                     x: result.x,
                     y: result.y,
+                    hexColorCode: result.hexColorCode
                 });
                 this.clickedPoint = result;
 
@@ -205,6 +236,7 @@ export default {
         canvasRefresh() {
             this.drawCanvas(this.sketchImage);
             this.drawMarkPoints();
+            this.drawShips();
         },
         async deleteBuilding() {
             let result = await buildingService.deleteBuilding(this.buildingDetails.id);
@@ -223,7 +255,6 @@ export default {
 
             const x = event.offsetX;
             const y = event.offsetY;
-console.log("delinoy");
             const ctx = this.$refs.canvas.getContext("2d")
 
             const card = document.querySelector('.card');
@@ -237,6 +268,7 @@ console.log("delinoy");
                     card.classList.remove('d-none');
                     isClickedOnPoint = true;
                     this.clickedPoint = point;
+                    this.decideCardPosition(20, 25,3);
 
                     // update building Id
                     this.buildingDetails.id = point.id;
@@ -247,6 +279,43 @@ console.log("delinoy");
                     card.classList.add('d-none');
                 }
             });
+            this.ships.forEach(ship => {
+                if (((x-ship.x) <= ship.width && (x-ship.x) > 0) && ( (y-ship.y) <= ship.height) && (y-ship.y) > 0) {
+                    isClickedOnPoint = true;
+                    this.clickedPoint = {
+                        x: ship.x,
+                        y: ship.y
+                    }
+                    this.decideCardPosition(ship.width, ship.height,3);
+                    card.classList.remove('d-none');
+                } else {
+                }
+                if (!isClickedOnPoint) {
+                    card.classList.add('d-none');
+                }
+            });
+        },
+
+        decideCardPosition(x,y,factor) {
+            let left = this.clickedPoint.x + x;
+            let top = this.clickedPoint.y + y;
+            let card = document.querySelector('.card');
+            
+            if(left + 100 > import.meta.env.VITE_APP_SCREEN_WIDTH) {
+                
+                left = this.clickedPoint.x - 100*factor;
+               
+            }
+            if(top + 100 > import.meta.env.VITE_APP_SCREEN_HEIGHT){
+
+                    top = this.clickedPoint.y - 100*factor;
+            }
+            this.setCardPosition(card, left, top);
+            
+        },
+        setCardPosition(card,x,y) {
+            card.style.left = `${x}px`;
+            card.style.top = `${y}px`;
         },
         drawMarkPoints() {
             const canvas = this.$refs.canvas;
@@ -259,6 +328,41 @@ console.log("delinoy");
                 this.markPoints.forEach(point => {
                     img.id = point.id;
                     ctx.drawImage(img, point.x, point.y, 30, 30);
+                });
+            }
+
+            // this.markPoints.forEach(point => {
+            //     const img = new Image();
+            //     const hexColorCode = point.hexColorCode;
+            //     const x = point.x;
+            //     const y = point.y;
+            //     // let svg = fillSvgColor(hexColorCode);
+
+            //     // img.id = point.id;
+
+            //     // img.style.fill = point.hexColorCode;
+            //     this.locationMapIconClicked.onload = () => {
+            //         ctx.drawImage(this.locationMapIconClicked, x, y, 30, 30);
+            //     };
+            //     // img.src = ShipIcon
+            // });
+
+            // this.markPoints.forEach(point => {
+            //     let img = point.hexColorCodeImage;
+            //     ctx.drawImage(img, point.x, point.y, 30, 30);
+            // });
+        },
+        drawShips() {
+            const canvas = this.$refs.canvas;
+            const ctx = canvas.getContext('2d');
+
+            const img = new Image();
+            img.src = Ship;
+
+
+            img.onload = () => {
+                this.ships.forEach(ship => {
+                    ctx.drawImage(img, ship.x, ship.y, ship.width, ship.height);
                 });
             }
         },
@@ -276,7 +380,6 @@ console.log("delinoy");
             this.drawCanvas(image);
         },
         setToolButtonActive(id) {
-            console.log(id);
             this.icons.forEach(icon => {
                 icon.active = icon.id === id;
             });
@@ -284,20 +387,28 @@ console.log("delinoy");
                 this.isDrawMode = false;
                 this.isSketchMode = true;
                 this.isDrawLineVisible = false;
+                this.isShipMode = false;
             }
             else if (id === 4) {
                 this.isDrawMode = true;
                 this.isSketchMode = false;
+                this.isShipMode = false;
                 this.isDrawLineVisible = true;
             }
-             else {
+            else if (id === 5) {
+                this.isDrawMode = false;
+                this.isSketchMode = false;
+                this.isDrawLineVisible = true;
+                this.isShipMode = true;
+            }
+            else {
+                this.isShipMode = false;
                 this.isSketchMode = false;
                 this.isDrawMode = false;
                 this.isDrawLineVisible = false;
-
             }
         },
-        resetCanvas(){
+        resetCanvas() {
             if (this.drawLine.reset()) {
                 this.canvasRefresh();
             }
@@ -333,8 +444,13 @@ console.log("delinoy");
                     active: false
                 },
                 {
-                    id : 4,
+                    id: 4,
                     path: ToolBarCreateRestrictionIcon,
+                    active: false,
+                },
+                {
+                    id: 5,
+                    path: ShipIcon,
                     active: false,
                 },
                 {
@@ -360,10 +476,10 @@ console.log("delinoy");
             event.preventDefault();
             if (event.deltaY > 0 && this.scale > 1) {
                 this.scale -= 0.1;
-            } else if(event.deltaY < 0 ) {
+            } else if (event.deltaY < 0) {
                 this.scale += 0.1;
             }
-            else{
+            else {
                 this.scale = 1;
             }
             this.$refs.canvas.style.transform = `scale(${this.scale})`;
@@ -421,21 +537,43 @@ console.log("delinoy");
         stopScrollScreen() {
             clearInterval(this.currentScrollInterval);
         },
+        async addShip() {
+            let img = new Image();
+            img.src = Ship;
+
+            let startPoint = this.drawLine.getStartPointOfRectangle();
+            let size = this.drawLine.calculateWidthAndHeightOfRectangle();
+            img.onload = () => {
+                this.drawLine.pushImageToRectangleField(img, () => this.resetCanvas());
+            }
+            let result = await shipService.addShip({
+                ...this.shipModel,
+                ...startPoint,
+                ...size
+            });
+            this.ships.push(result);
+            this.shipModel = {};
+        },
+        cancelAddShip() {
+            console.log('cancel');
+            this.shipModel = {};
+        },
 
     },
-  
+
+
 }
 </script>
 
 <template>
-    <div class="home-page"  v-on:wheel="scalePage($event)" >
-        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas"/>
+    <div class="home-page" v-on:wheel="scalePage($event)"   >
+        <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas" />
         <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
         <ScrollButton @scroll-screen="scrollScreen" @stop-scroll-screen="stopScrollScreen" />
-        <div class="position-relative"  ref="homepage">
-            <canvas class="position-absolute" ref="canvas"  
-                @mousedown="panStart" @mousemove="panMove" @mouseup="panEnd" @mouseleave="panEnd"
-                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? {click : handleClickDrawMode} : { click: handleCanvasCursor }">
+        <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
+            <canvas class="position-absolute" ref="canvas"
+            @mousedown="panStart" @mousemove="panMove" @mouseup="panEnd" @mouseleave="panEnd"
+                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? { click: handleClickDrawMode } : isShipMode ? { click: handleClickShipDrawMode } : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">
@@ -454,12 +592,15 @@ console.log("delinoy");
             </div>
         </div>
     </div>
-    <ModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails" :markerSvgColor="markerColor"
-        :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding"></ModalComponent>
-    <ModalComponent ref="UpdateModalComponent" @input-data="setBuildingDetailsFromModalComponent"
-        :modalTypeDetails="modalUpdateBuildingDetails" :markerSvgColor="markerColor"
+    <BuildingModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails"
+        :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding">
+    </BuildingModalComponent>
+    <BuildingModalComponent ref="UpdateModalComponent" :modalTypeDetails="modalUpdateBuildingDetails"
         :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
         :footerDeleteButtonFuction="deleteBuilding">
+    </BuildingModalComponent>
+    <ModalComponent ref="AddShipModalComponent" :title="'deneme'" @save="addShip()" @cancel="cancelAddShip()">
+        <ShipAddContent :shipModel="shipModel" />
     </ModalComponent>
 </template>
 

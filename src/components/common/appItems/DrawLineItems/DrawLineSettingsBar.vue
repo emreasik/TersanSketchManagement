@@ -1,6 +1,6 @@
 <template>
     <div ref="drawModeSettings" class="draw-line-settings-bar" :class="{'draw-mode':isVisible}">
-        <button class="draw-line-settings-bar__button draw-line-settings-bar__button-cross" @click="$emit('resetDrawLine')" value="asdas">
+        <button class="draw-line-settings-bar__button draw-line-settings-bar__button-cross" @click="$emit('resetDrawLine')">
             <img class="p-0 m-0 w-50 draw-line-settings-bar__button__image" :src='cross' alt="cross" />
         </button>
         <button class="draw-line-settings-bar__button draw-line-settings-bar__button-save" value="asdas">

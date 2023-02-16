@@ -3,8 +3,8 @@ function addBuildingLabels() {
         modalId: 0,
         modalHeaderLabel: 'Yeni Bina Ekle',
         modalBodyLabel: 'Bina Adı',
-        modalBodyInputSpanX: 'X Koordinatı',
-        modalBodyInputSpanY: 'Y Koordinatı',
+        modalBodyInputSpanX: 'X',
+        modalBodyInputSpanY: 'Y',
         modalFooterFirstButton: 'Kaydet',
         modalFooterSecondButton: 'İptal',
     }
@@ -15,8 +15,8 @@ function updateBuildingLabels() {
         modalId: 1,
         modalHeaderLabel: 'Bina Düzenle',
         modalBodyLabel: 'Bina Adı',
-        modalBodyInputSpanX: 'X Koordinatı',
-        modalBodyInputSpanY: 'Y Koordinatı',
+        modalBodyInputSpanX: 'X',
+        modalBodyInputSpanY: 'Y',
         modalFooterFirstButton: 'Kaydet',
         modalFooterSecondButton: 'İptal',
     }

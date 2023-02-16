@@ -1,20 +1,27 @@
 import { DrawLineColors } from "./Models/DrawLineColors";
 import { Point } from "./Models/Point";
+import { RectSize } from "./Models/RectSize";
+import { Edge } from "./Models/Edge";
+import { IdentityPoint } from "./Models/IdentityPoint";
 import { Size } from "./Models/Size";
 export const DrawLine = class DrawLine {
     isDrawMode: boolean;
     PreviousDrawPoint: Point;
     CurrentDrawPoint: Point;
     Colors: DrawLineColors;
-    PointHistory: Point[];
+    PointHistory: IdentityPoint[];
     CircleFound: boolean;
     Canvas: HTMLCanvasElement;
     sensitiveDistance: Size;
     currentPointColor: string;
+    Edges: Edge[];
+    id: number;
+
 
     constructor(canvas:HTMLCanvasElement) {
         this.Canvas = canvas;
         this.defaultConfig();
+
 
     }
 
@@ -27,13 +34,15 @@ export const DrawLine = class DrawLine {
 
     private defaultConfig() : void {
         this.isDrawMode = false;
-        this.PreviousDrawPoint = new Point();
-        this.CurrentDrawPoint = new Point();
+        this.PreviousDrawPoint = new Point(0,0);
+        this.CurrentDrawPoint = new Point(0,0);
         this.Colors = new DrawLineColors("red","#000000","#000000");
         this.sensitiveDistance = new Size(10,10);
         this.PointHistory = [];
         this.CircleFound = false;
         this.currentPointColor = "blue";
+        this.id = 1;
+        this.Edges = [];
     }
 
     getHistory() : Point[] {
@@ -90,7 +99,6 @@ export const DrawLine = class DrawLine {
             // ctrl pressed
             if  (this.isNearToExistingCircle(point,eventPoint) && pressedCtrl)
             {
-                console.log("near to existing circle also pressed ctrl");
                 this.setPreviousPointCoordinates(this.CurrentDrawPoint.x,this.CurrentDrawPoint.y);
                 this.drawCirleAndFill({x:this.CurrentDrawPoint.x,y:this.CurrentDrawPoint.y},this.Colors.circleColor,this.Colors.borderColor,2);
                 // this.drawLine.setCurrentPointToPreviousPoint();
@@ -100,8 +108,6 @@ export const DrawLine = class DrawLine {
                 return;
             }
             else if(this.isNearToExistingCircle(point,eventPoint)) {
-                console.log(point);
-                console.log(eventPoint);
                 this.PreviousDrawPoint.x = 0;
                 this.PreviousDrawPoint.y = 0;
                 this.drawCirleAndFill({x:this.CurrentDrawPoint.x,y:this.CurrentDrawPoint.y},this.Colors.circleColor,this.Colors.borderColor,2);
@@ -127,7 +133,9 @@ export const DrawLine = class DrawLine {
         if(!this.CircleFound){
             this.drawCirleAndFill({x:this.PreviousDrawPoint.x,y:this.PreviousDrawPoint.y},this.Colors.circleColor,this.Colors.borderColor,2);
             this.drawCirleAndFill({x:eventPoint.x,y:eventPoint.y},this.currentPointColor,this.Colors.borderColor,2);
-            this.PointHistory.push({x: eventPoint.x, y: eventPoint.y});
+            this.PointHistory.push({id:this.id,x: eventPoint.x, y: eventPoint.y});
+            this.id++;
+
         }
         if(this.PreviousDrawPoint != null && this.PreviousDrawPoint.x != 0 && this.PreviousDrawPoint.y != 0
             && this.CurrentDrawPoint != null && this.CurrentDrawPoint.x != 0 && this.CurrentDrawPoint.y != 0
@@ -135,8 +143,9 @@ export const DrawLine = class DrawLine {
         )
         {
             this.drawLine({x:this.PreviousDrawPoint.x, y:this.PreviousDrawPoint.y}, {x:this.CurrentDrawPoint.x, y:this.CurrentDrawPoint.y}, this.Colors.lineColor, 3);
+            this.Edges.push({from:new Point(this.PreviousDrawPoint.x,this.PreviousDrawPoint.y),to:{x:this.CurrentDrawPoint.x,y:this.CurrentDrawPoint.y}});
+            
         }
-
         this.CircleFound = false;
     }
     private drawLine(startPoint:Point,endPoint:Point, color:string, width:number) : void {
@@ -159,10 +168,121 @@ export const DrawLine = class DrawLine {
         ctx.strokeStyle = strokeColor;
         ctx.stroke();
     }
+    calculateWidthAndHeightOfRectangle() : RectSize {
+        let points = this.detectRectanglePoints();
+        
+        this.drawRectangle();
+        let size:RectSize = new RectSize(0,0);
+        if(points?.length === 4)
+        {
+
+            size.width = Math.abs(points[0].x - points[1].x);
+            
+            size.height = Math.abs(points[1].y - points[2].y);
+
+        }
+
+        return size;
+        
+    }
+
+    getStartPointOfRectangle() : Point {
+        let points = this.detectRectanglePoints();
+        this.drawRectangle();
+        let startPoint:Point = new Point(0,0);
+        if(points?.length === 4)
+        {
+            startPoint.x = points[0].x;
+            startPoint.y = points[0].y;
+        }
+    
+        return startPoint;
+    }
+
+    pushImageToRectangleField(img:HTMLImageElement,beforeDraw:Function) : void {
+       if(this.Edges.length === 4){
+        let startPoint = this.getStartPointOfRectangle();
+        let size = this.calculateWidthAndHeightOfRectangle();
+        let ctx = this.getCanvasContext();
+        beforeDraw();
+        ctx.drawImage(img,startPoint.x,startPoint.y,size.width,size.height);
+       }
+    }
+
+    hasEnoughEdgesForRectangle() : boolean {
+        let result = this.Edges.filter((edge) => edge.from.x === this.PointHistory[0].x && edge.from.y === this.PointHistory[0].y ||
+                edge.to.x === this.PointHistory[0].x && edge.to.y === this.PointHistory[0].y)
+
+        return this.Edges.length === 4 && result.length === 2;
+    }
 
     checkPointsExist() : boolean {
         return (this.PreviousDrawPoint != null && this.PreviousDrawPoint.x != 0 && this.PreviousDrawPoint.y != 0
             && this.CurrentDrawPoint != null && this.CurrentDrawPoint.x != 0 && this.CurrentDrawPoint.y != 0)
     }
+
+    drawRectangle() : void {
+            if(this.PointHistory.length === 4){
+                let points = this.detectRectanglePoints();
+                
+            if(points.length === 4)
+            {
+                this.drawLine(points[0],points[1],this.Colors.lineColor,3);
+                this.drawLine(points[1],points[2],this.Colors.lineColor,3);
+                this.drawLine(points[2],points[3],this.Colors.lineColor,3);
+                this.drawLine(points[3],points[0],this.Colors.lineColor,3);
+            }
+
+            }
+    }
+
+    detectRectanglePoints()  : any {
+        let points:Point[] = [];
+        if(this.PointHistory.length === 4)
+        {
+            let result = this.Edges.filter((edge) => edge.from.x === this.PointHistory[0].x && edge.from.y === this.PointHistory[0].y ||
+                edge.to.x === this.PointHistory[0].x && edge.to.y === this.PointHistory[0].y)
+
+            if(result.length === 2)
+            {
+                let smallest = {...this.PointHistory[0]};
+                let biggest = {...this.PointHistory[0]};
+                 //detect smallest x and y to find top left point
+                this.PointHistory.forEach((point) => {
+                    if(point.x < smallest.x)
+                    {
+                        smallest.x = point.x;
+                    }
+                    if(point.y < smallest.y)
+                    {
+                        smallest.y = point.y;
+                    }
+                    if(point.x > biggest.x)
+                    {
+                        biggest.x = point.x;
+                    }
+                    if(point.y > biggest.y)
+                    {
+                        biggest.y = point.y;
+                    }
+                })
+
+                points = this.createRectanglePoints(smallest,biggest);
+                }
+
+                return points;
+
+        }
+    }
+
+    private createRectanglePoints(topLeft:Point,bottomRight:Point) : Point[] {
+        let points:Point[] = [];
+        points.push({x:topLeft.x,y:topLeft.y});
+        points.push({x:bottomRight.x,y:topLeft.y});
+        points.push({x:bottomRight.x,y:bottomRight.y});
+        points.push({x:topLeft.x,y:bottomRight.y});
+        return points;
+    }
+
 }
     

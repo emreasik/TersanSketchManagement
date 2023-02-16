@@ -125,8 +125,8 @@ export default {
 
             return new Promise((resolve, reject) => {
                 this.sketchImage.onload = () => {
-                    this.sketchImage.height = 1240;
-                    this.sketchImage.width = 1920;
+                    this.sketchImage.height = import.meta.env.VITE_APP_SCREEN_HEIGHT;
+                    this.sketchImage.width = import.meta.env.VITE_APP_SCREEN_WIDTH;
                     this.drawCanvas(this.sketchImage);
                     resolve();
                 };
@@ -259,6 +259,7 @@ export default {
                     card.classList.remove('d-none');
                     isClickedOnPoint = true;
                     this.clickedPoint = point;
+                    this.decideCardPosition(20, 25,3);
 
                     // update building Id
                     this.buildingDetails.id = point.id;
@@ -269,6 +270,43 @@ export default {
                     card.classList.add('d-none');
                 }
             });
+            this.ships.forEach(ship => {
+                if (((x-ship.x) <= ship.width && (x-ship.x) > 0) && ( (y-ship.y) <= ship.height) && (y-ship.y) > 0) {
+                    isClickedOnPoint = true;
+                    this.clickedPoint = {
+                        x: ship.x,
+                        y: ship.y
+                    }
+                    this.decideCardPosition(ship.width, ship.height,3);
+                    card.classList.remove('d-none');
+                } else {
+                }
+                if (!isClickedOnPoint) {
+                    card.classList.add('d-none');
+                }
+            });
+        },
+
+        decideCardPosition(x,y,factor) {
+            let left = this.clickedPoint.x + x;
+            let top = this.clickedPoint.y + y;
+            let card = document.querySelector('.card');
+            
+            if(left + 100 > import.meta.env.VITE_APP_SCREEN_WIDTH) {
+                
+                left = this.clickedPoint.x - 100*factor;
+               
+            }
+            if(top + 100 > import.meta.env.VITE_APP_SCREEN_HEIGHT){
+
+                    top = this.clickedPoint.y - 100*factor;
+            }
+            this.setCardPosition(card, left, top);
+            
+        },
+        setCardPosition(card,x,y) {
+            card.style.left = `${x}px`;
+            card.style.top = `${y}px`;
         },
         drawMarkPoints() {
             const canvas = this.$refs.canvas;

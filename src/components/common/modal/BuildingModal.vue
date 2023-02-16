@@ -3,10 +3,10 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <BuildingModalHeader :modalHeaderTitle="modalTypeDetails.modalHeaderLabel"></BuildingModalHeader>
-                <BuildingModalBody @input-data="emitData" :modalBodyLabel="modalTypeDetails.modalBodyLabel"
+                <BuildingModalBody :modalBodyLabel="modalTypeDetails.modalBodyLabel"
                     :modalBodyInputSpanX="modalTypeDetails.modalBodyInputSpanX"
-                    :modalBodyInputSpanY="modalTypeDetails.modalBodyInputSpanY" :markerSvgColor="markerSvgColor"
-                    :inputDetails="inputDetails"></BuildingModalBody>
+                    :modalBodyInputSpanY="modalTypeDetails.modalBodyInputSpanY" :inputDetails="inputDetails">
+                </BuildingModalBody>
                 <BuildingMoodalFooter :firstButtonLabel="modalTypeDetails.modalFooterFirstButton"
                     :secondButtonLabel="modalTypeDetails.modalFooterSecondButton" :buttonFunction="footerButtonFuction"
                     :buttonDeleteFunction="footerDeleteButtonFuction">
@@ -29,7 +29,6 @@ export default {
         BuildingMoodalFooter
     },
     created() {
-        console.log(this.inputDetails);
     },
     props: {
         modalTypeDetails: {
@@ -44,19 +43,9 @@ export default {
             type: Function,
             required: true
         },
-        markerSvgColor: {
-            type: String,
-            required: true
-        },
         inputDetails: {
             type: Object,
             required: true
-        }
-    },
-    methods: {
-        emitData(buildingDetails) {
-            console.log(buildingDetails)
-            this.$emit('input-data', buildingDetails);
         }
     }
 }

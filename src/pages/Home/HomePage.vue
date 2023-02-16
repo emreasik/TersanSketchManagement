@@ -16,6 +16,8 @@ import { buildingService, shipService } from '../../services/ApiService.js';
 import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
+import { fillSvgColor, svgConvertToBase64 } from '../../helpers/Svg/svgConstants.js'
+
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
 import { DrawLine } from '../../helpers/Canvas';
 import BuildingModalComponent from '../../components/common/modal/BuildingModal.vue';
@@ -41,6 +43,7 @@ export default {
             buildingDetails: {},
             buildingDetailsForUpdate: {},
             markPoints: [],
+            previousMarkPoint: {},
             isSketchMode: false,
             isDrawMode: false,
             isShipMode: false,
@@ -64,19 +67,18 @@ export default {
 
         }
     },
-    async created() {
+    created() {
         //init
         this.setInitialIcons();
         this.setInitialSketchIcons();
         this.setInitialBuildingDetails();
-        await this.setMarkPoints();
-        this.setInitialClickIcons();
-        await this.setShips();
     },
     async mounted() {
         await this.setSketchImage();
         this.setDrawLine();
-
+        await this.setMarkPoints();
+        this.setInitialClickIcons();
+        await this.setShips();
     },
     methods: {
         setDrawLine() {
@@ -107,8 +109,12 @@ export default {
 
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
-            this.drawMarkPoints()
-
+            // this.markPoints.forEach((markPoint) => {
+            //     let image = new Image();
+            //     image.src = svgConvertToBase64(markPoint.hexColorCode);
+            //     markPoint.hexColorCodeImage = image;
+            // });
+            this.drawMarkPoints();
         },
         async setShips() {
             this.ships = (await shipService.getShips()).data;
@@ -116,8 +122,6 @@ export default {
         },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
-
-
 
             return new Promise((resolve, reject) => {
                 this.sketchImage.onload = () => {
@@ -141,11 +145,6 @@ export default {
                 sketchId: 1,
             }
         },
-        setBuildingDetailsFromModalComponent(updateBuildingData) {
-            console.log(updateBuildingData);
-            this.buildingDetailsForUpdate = updateBuildingData;
-            console.log(this.buildingDetailsForUpdate);
-        },
         setInitialClickIcons() {
             this.locationMapIcon.src = LocationMapIcon;
             this.locationMapIconClicked.src = LocationMapIconClicked;
@@ -157,6 +156,7 @@ export default {
             const y = event.offsetY;
             //find the point o canvas
             console.log(x, y);
+            console.log(this.buildingDetailsForUpdate);
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -172,17 +172,11 @@ export default {
         },
         openUpdateModal() {
             this.openModal(this.$refs.UpdateModalComponent.$el);
-            this.updateBuildingVariables();
+            this.updateBuildingVariablesWhenUpdateModalOpen();
         },
-        updateBuildingVariables() {
-            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
+        updateBuildingVariablesWhenUpdateModalOpen() {
             const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
-            console.log(building);
-            this.buildingDetailsForUpdate.id = building.id;
-            this.buildingDetailsForUpdate.name = building.name;
-            this.buildingDetailsForUpdate.x = building.x;
-            this.buildingDetailsForUpdate.y = building.y;
-            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
+            this.buildingDetailsForUpdate = { ...building };
         },
         async addNewBuilding() {
             let result = await buildingService.addBuilding(this.buildingDetails);
@@ -289,6 +283,27 @@ export default {
                     ctx.drawImage(img, point.x, point.y, 30, 30);
                 });
             }
+
+            // this.markPoints.forEach(point => {
+            //     const img = new Image();
+            //     const hexColorCode = point.hexColorCode;
+            //     const x = point.x;
+            //     const y = point.y;
+            //     // let svg = fillSvgColor(hexColorCode);
+
+            //     // img.id = point.id;
+
+            //     // img.style.fill = point.hexColorCode;
+            //     this.locationMapIconClicked.onload = () => {
+            //         ctx.drawImage(this.locationMapIconClicked, x, y, 30, 30);
+            //     };
+            //     // img.src = ShipIcon
+            // });
+
+            // this.markPoints.forEach(point => {
+            //     let img = point.hexColorCodeImage;
+            //     ctx.drawImage(img, point.x, point.y, 30, 30);
+            // });
         },
         drawShips() {
             const canvas = this.$refs.canvas;
@@ -300,7 +315,6 @@ export default {
 
             img.onload = () => {
                 this.ships.forEach(ship => {
-                    console.log(ship);
                     ctx.drawImage(img, ship.x, ship.y, ship.width, ship.height);
                 });
             }
@@ -319,7 +333,6 @@ export default {
             this.drawCanvas(image);
         },
         setToolButtonActive(id) {
-            console.log(id);
             this.icons.forEach(icon => {
                 icon.active = icon.id === id;
             });
@@ -439,20 +452,13 @@ export default {
                 ...startPoint,
                 ...size
             });
-
             this.ships.push(result);
-
-            
-            
-
-           
             this.shipModel = {};
         },
         cancelAddShip() {
             console.log('cancel');
             this.shipModel = {};
         },
-
     }
 }
 </script>
@@ -483,16 +489,14 @@ export default {
         </div>
     </div>
     <BuildingModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails"
-        :markerSvgColor="markerColor" :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding">
+        :inputDetails="buildingDetails" :footerButtonFuction="addNewBuilding">
     </BuildingModalComponent>
-    <BuildingModalComponent ref="UpdateModalComponent" @input-data="setBuildingDetailsFromModalComponent"
-        :modalTypeDetails="modalUpdateBuildingDetails" :markerSvgColor="markerColor"
+    <BuildingModalComponent ref="UpdateModalComponent" :modalTypeDetails="modalUpdateBuildingDetails"
         :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
         :footerDeleteButtonFuction="deleteBuilding">
     </BuildingModalComponent>
     <ModalComponent ref="AddShipModalComponent" :title="'deneme'" @save="addShip()" @cancel="cancelAddShip()">
         <ShipAddContent :shipModel="shipModel" />
-
     </ModalComponent>
 </template>
 

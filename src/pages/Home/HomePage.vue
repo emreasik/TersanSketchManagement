@@ -56,7 +56,10 @@ export default {
             isDrawLineVisible: false,
             // TODO: Move to constants
             scale: 1,
-            shipModel: {},
+            shipModel: {
+                name: '',
+                shipStatusId: 1
+            },
             ships: [],
 
         }

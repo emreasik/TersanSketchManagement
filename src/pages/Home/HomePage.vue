@@ -16,7 +16,7 @@ import { buildingService, shipService } from '../../services/ApiService.js';
 import { Modal } from 'bootstrap'
 import { ElNotification } from 'element-plus'
 import toastMessages from '../../helpers/toastConstants.js'
-import { fillSvgColor } from '../../helpers/Svg/svgConstants.js'
+import { fillSvgColor, svgConvertToBase64 } from '../../helpers/Svg/svgConstants.js'
 
 import SketchMarkerIcon from '../../assets/icons/SketchMarkerIconSVG.vue';
 import { DrawLine } from '../../helpers/Canvas';
@@ -43,6 +43,7 @@ export default {
             buildingDetails: {},
             buildingDetailsForUpdate: {},
             markPoints: [],
+            previousMarkPoint: {},
             isSketchMode: false,
             isDrawMode: false,
             isShipMode: false,
@@ -63,18 +64,18 @@ export default {
 
         }
     },
-    async created() {
+    created() {
         //init
         this.setInitialIcons();
         this.setInitialSketchIcons();
         this.setInitialBuildingDetails();
-        await this.setMarkPoints();
-        this.setInitialClickIcons();
-        await this.setShips();
     },
     async mounted() {
         await this.setSketchImage();
         this.setDrawLine();
+        await this.setMarkPoints();
+        this.setInitialClickIcons();
+        await this.setShips();
     },
     methods: {
         setDrawLine() {
@@ -105,8 +106,12 @@ export default {
 
         async setMarkPoints() {
             this.markPoints = (await buildingService.getBuildings()).data;
-            this.drawMarkPoints()
-
+            // this.markPoints.forEach((markPoint) => {
+            //     let image = new Image();
+            //     image.src = svgConvertToBase64(markPoint.hexColorCode);
+            //     markPoint.hexColorCodeImage = image;
+            // });
+            this.drawMarkPoints();
         },
         async setShips() {
             this.ships = (await shipService.getShips()).data;
@@ -114,8 +119,6 @@ export default {
         },
         setSketchImage() {
             this.sketchImage.src = new URL('../../assets/images/sketch2.jpg', import.meta.url);
-
-
 
             return new Promise((resolve, reject) => {
                 this.sketchImage.onload = () => {
@@ -169,12 +172,8 @@ export default {
             this.updateBuildingVariablesWhenUpdateModalOpen();
         },
         updateBuildingVariablesWhenUpdateModalOpen() {
-            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
             const building = this.markPoints.find(point => point.id === this.buildingDetails.id);
-            console.log(building);
             this.buildingDetailsForUpdate = { ...building };
-
-            console.log("updateBuildingVariables", this.buildingDetailsForUpdate);
         },
         async addNewBuilding() {
             let result = await buildingService.addBuilding(this.buildingDetails);
@@ -272,34 +271,36 @@ export default {
             const canvas = this.$refs.canvas;
             const ctx = canvas.getContext('2d');
 
-            // const img = new Image();
-            // img.src = SVGMarkerIcon;
-            // console.log(img.src);
+            const img = new Image();
+            img.src = LocationMapIcon;
 
-            // img.onload = () => {
-            //     this.markPoints.forEach(point => {
-            //         img.id = point.id;
-            //         img.style.fill = "#FFFFFF";
-            //         console.log(img.style);
-            //         ctx.drawImage(img, point.x, point.y, 30, 30);
-            //     });
-            // }
+            img.onload = () => {
+                this.markPoints.forEach(point => {
+                    img.id = point.id;
+                    ctx.drawImage(img, point.x, point.y, 30, 30);
+                });
+            }
 
-            this.markPoints.forEach(point => {
-                const img = new Image();
-                const hexColorCode = point.hexColorCode;
-                const x = point.x;
-                const y = point.y;
-                let svg = fillSvgColor(hexColorCode);
+            // this.markPoints.forEach(point => {
+            //     const img = new Image();
+            //     const hexColorCode = point.hexColorCode;
+            //     const x = point.x;
+            //     const y = point.y;
+            //     // let svg = fillSvgColor(hexColorCode);
 
-                // img.id = point.id;
+            //     // img.id = point.id;
 
-                // img.style.fill = point.hexColorCode;
-                img.onload = () => {
-                    ctx.drawImage(img, x, y, 30, 30);
-                };
-                img.src = 'data:image/svg+xml;base64,' + btoa(svg);
-            });
+            //     // img.style.fill = point.hexColorCode;
+            //     this.locationMapIconClicked.onload = () => {
+            //         ctx.drawImage(this.locationMapIconClicked, x, y, 30, 30);
+            //     };
+            //     // img.src = ShipIcon
+            // });
+
+            // this.markPoints.forEach(point => {
+            //     let img = point.hexColorCodeImage;
+            //     ctx.drawImage(img, point.x, point.y, 30, 30);
+            // });
         },
         drawShips() {
             const canvas = this.$refs.canvas;
@@ -311,7 +312,6 @@ export default {
 
             img.onload = () => {
                 this.ships.forEach(ship => {
-                    console.log(ship);
                     ctx.drawImage(img, ship.x, ship.y, ship.width, ship.height);
                 });
             }
@@ -330,7 +330,6 @@ export default {
             this.drawCanvas(image);
         },
         setToolButtonActive(id) {
-            console.log(id);
             this.icons.forEach(icon => {
                 icon.active = icon.id === id;
             });
@@ -450,20 +449,13 @@ export default {
                 ...startPoint,
                 ...size
             });
-
             this.ships.push(result);
-
-
-
-
-
             this.shipModel = {};
         },
         cancelAddShip() {
             console.log('cancel');
             this.shipModel = {};
         },
-
     }
 }
 </script>
@@ -502,7 +494,6 @@ export default {
     </BuildingModalComponent>
     <ModalComponent ref="AddShipModalComponent" :title="'deneme'" @save="addShip()" @cancel="cancelAddShip()">
         <ShipAddContent :shipModel="shipModel" />
-
     </ModalComponent>
 </template>
 

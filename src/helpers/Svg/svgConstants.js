@@ -9,5 +9,10 @@ function fillSvgColor(hexColorCode) {
     </svg>`
 }
 
+function svgConvertToBase64(hexColorCode) {
+    const svg = fillSvgColor(hexColorCode);
+    return 'data:image/svg+xml;base64,' + btoa(svg);
 
-export { fillSvgColor };
+}
+
+export { fillSvgColor, svgConvertToBase64 };

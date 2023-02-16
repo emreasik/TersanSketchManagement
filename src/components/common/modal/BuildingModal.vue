@@ -29,7 +29,6 @@ export default {
         BuildingMoodalFooter
     },
     created() {
-        console.log(this.inputDetails);
     },
     props: {
         modalTypeDetails: {

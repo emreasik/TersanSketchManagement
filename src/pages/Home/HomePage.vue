@@ -23,6 +23,7 @@ import { DrawLine } from '../../helpers/Canvas';
 import BuildingModalComponent from '../../components/common/modal/BuildingModal.vue';
 import ModalComponent from '../../components/common/modal/Common/Modal.vue';
 import ShipAddContent from '../../components/common/modal/ShipAddContent.vue';
+import SketchAddContent from '../../components/common/modal/SketchAddContent.vue';
 import { addBuildingLabels, updateBuildingLabels } from '../../components/common/modal/constants/labels.js'
 
 
@@ -34,7 +35,8 @@ export default {
         BuildingModalComponent,
         DrawLineSettingsBar,
         ModalComponent,
-        ShipAddContent
+        ShipAddContent,
+        SketchAddContent
     },
     data() {
         return {
@@ -44,7 +46,7 @@ export default {
             buildingDetailsForUpdate: {},
             markPoints: [],
             previousMarkPoint: {},
-            isSketchMode: false,
+            isAddMarkMode: false,
             isDrawMode: false,
             isShipMode: false,
             drawLine: null,
@@ -62,6 +64,10 @@ export default {
             shipModel: {
                 name: '',
                 shipStatusId: 1
+            },
+            sketchModel: {
+                name: '',
+                description: '',
             },
             ships: [],
 
@@ -135,6 +141,9 @@ export default {
                 };
             });
         },
+        handleAddSketchMode() {
+            this.openModal(this.$refs.AddSketchModalComponent.$el);
+        },
         setInitialBuildingDetails() {
             this.buildingDetails = {
                 id: 0,
@@ -155,8 +164,6 @@ export default {
             const x = event.offsetX;
             const y = event.offsetY;
             //find the point o canvas
-            console.log(x, y);
-            console.log(this.buildingDetailsForUpdate);
             this.openModal(this.$refs.AddModalComponent.$el);
 
             this.buildingDetails.x = x - 15;
@@ -338,27 +345,41 @@ export default {
             });
             if (id === 2) {
                 this.isDrawMode = false;
-                this.isSketchMode = true;
+                this.isAddMarkMode = true;
+                this.isDrawLineVisible = false;
+                this.isShipMode = false;
+            }
+            else if (id === 3) {
+                this.isDrawMode = false;
+                this.isAddMarkMode = false;
                 this.isDrawLineVisible = false;
                 this.isShipMode = false;
             }
             else if (id === 4) {
                 this.isDrawMode = true;
-                this.isSketchMode = false;
+                this.isAddMarkMode = false;
                 this.isShipMode = false;
                 this.isDrawLineVisible = true;
             }
             else if (id === 5) {
                 this.isDrawMode = false;
-                this.isSketchMode = false;
+                this.isAddMarkMode = false;
                 this.isDrawLineVisible = true;
                 this.isShipMode = true;
             }
             else {
                 this.isShipMode = false;
-                this.isSketchMode = false;
+                this.isAddMarkMode = false;
                 this.isDrawMode = false;
                 this.isDrawLineVisible = false;
+            }
+        },
+        setSketchOperationButtonActive(id) {
+            this.sketchIcons.forEach(icon => {
+                icon.active = icon.id === id;
+            });
+            if (id === 1) {
+                this.openModal(this.$refs.AddSketchModalComponent.$el);
             }
         },
         resetCanvas() {
@@ -418,10 +439,12 @@ export default {
                 {
                     id: 1,
                     path: ToolbarAddIcon,
+                    active: false
                 },
                 {
                     id: 2,
                     path: ToolbarListIcon,
+                    active: false
                 }
             ];
         },
@@ -466,10 +489,11 @@ export default {
 <template>
     <div class="home-page">
         <DrawLineSettingsBar :is-visible='isDrawLineVisible' @reset-draw-line="resetCanvas" />
-        <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive" />
+        <Toolbar :icons="icons" :sketchIcons="sketchIcons" @tool-button-clicked="setToolButtonActive"
+            @sketch-operation-button-clicked="setSketchOperationButtonActive" />
         <div class="position-relative" v-on:wheel="scalePage($event)" ref="homepage">
             <canvas class="position-absolute" ref="canvas"
-                v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? { click: handleClickDrawMode } : isShipMode ? { click: handleClickShipDrawMode } : { click: handleCanvasCursor }">
+                v-on="isAddMarkMode ? { click: handleCanvasClick } : isDrawMode ? { click: handleClickDrawMode } : isShipMode ? { click: handleClickShipDrawMode } : { click: handleCanvasCursor }">
             </canvas>
             <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
                 style="width: 18rem;">
@@ -495,8 +519,11 @@ export default {
         :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
         :footerDeleteButtonFuction="deleteBuilding">
     </BuildingModalComponent>
-    <ModalComponent ref="AddShipModalComponent" :title="'deneme'" @save="addShip()" @cancel="cancelAddShip()">
+    <ModalComponent ref="AddShipModalComponent" :title="'Gemi Ekle'" @save="addShip()" @cancel="cancelAddShip()">
         <ShipAddContent :shipModel="shipModel" />
+    </ModalComponent>
+    <ModalComponent ref="AddSketchModalComponent" :title="'Kroki Ekle'">
+        <SketchAddContent :sketchModal="sketchModel" />
     </ModalComponent>
 </template>
 

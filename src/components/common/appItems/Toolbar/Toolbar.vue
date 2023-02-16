@@ -3,7 +3,7 @@
         <ToolButton :icon="icon" :isActive="icon.active" v-for="icon in icons" :key="icon.id"
             @tool-button-clicked="setToolButtonActive" />
         <SketchButton :style="activeIcon" :sketchIcon="sketchIcon" v-for="sketchIcon in sketchIcons"
-            :key="sketchIcon.id" />
+            :key="sketchIcon.id" @sketch-operation-button-clicked="setSketchOperationButtonActive" />
     </div>
 </template>
 
@@ -34,6 +34,9 @@ export default {
     methods: {
         setToolButtonActive(id) {
             this.$emit('tool-button-clicked', id);
+        },
+        setSketchOperationButtonActive(id) {
+            this.$emit('sketch-operation-button-clicked', id);
         }
     },
     computed: {
@@ -58,7 +61,7 @@ export default {
     right: 1%;
     gap: 10px;
     transform: translate(0, -50%);
-    
+
     // TODO 2 item gelince ortalama fixle
     z-index: 1;
 }

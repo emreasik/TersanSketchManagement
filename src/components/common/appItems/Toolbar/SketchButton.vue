@@ -1,5 +1,5 @@
 <template>
-    <div class="tool-button__sketch-container">
+    <div class="tool-button__sketch-container" @click="$emit('sketchOperationButtonClicked', sketchIcon.id)">
         <div class="tool-button__sketch-container__button">
             <img :src="sketchIcon.path" alt="cursor">
         </div>

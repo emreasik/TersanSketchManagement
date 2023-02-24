@@ -2,6 +2,7 @@
 import Toolbar from '../../components/common/appItems/Toolbar/Toolbar.vue'
 import ScrollButton from '../../components/common/appItems/Toolbar/ScrollButton.vue'
 import DrawLineSettingsBar from '../../components/common/appItems/DrawLineItems/DrawLineSettingsBar.vue';
+import Card from '../../components/common/card/Card.vue';
 import ToolbarLocationIcon from '../../assets/icons/location_marker_icon.png';
 import ToolbarCursorIcon from '../../assets/icons/cursor_icon.png';
 import ToolbarSketchIcon from '../../assets/icons/sketch_icon.png';
@@ -38,7 +39,8 @@ export default {
         ModalComponent,
         DrawLineSettingsBar,
         ScrollButton,
-        ShipAddContent
+        ShipAddContent,
+        Card
     },
     data() {
         return {
@@ -123,10 +125,12 @@ export default {
             //     image.src = svgConvertToBase64(markPoint.hexColorCode);
             //     markPoint.hexColorCodeImage = image;
             // });
+            console.log(this.markPoints);
             this.drawMarkPoints();
         },
         async setShips() {
             this.ships = (await shipService.getShips()).data;
+            console.log(this.ships);
             this.drawShips();
         },
         setSketchImage() {
@@ -257,18 +261,20 @@ export default {
             const y = event.offsetY;
             const ctx = this.$refs.canvas.getContext("2d")
 
-            const card = document.querySelector('.card');
             let isClickedOnPoint = false;
-
+            const markPointCard = document.querySelector('#markPointCard');
+            const shipCard = document.querySelector('#shipCard');
+            
             this.markPoints.forEach(point => {
                 if (Math.abs(point.x - x) <= 30 && Math.abs(point.y - y) <= 30) {
                     ctx.drawImage(this.locationMapIconClicked, point.x, point.y, 30, 30);
-                    card.style.left = `${parseInt(point.x) + 20}px`;
-                    card.style.top = `${parseInt(point.y) + 25}px`;
-                    card.classList.remove('d-none');
+                    markPointCard.style.left = `${parseInt(point.x) + 20}px`;
+                    markPointCard.style.top = `${parseInt(point.y) + 25}px`;
+                    markPointCard.classList.remove('d-none');
+                    shipCard.classList.add('d-none');
                     isClickedOnPoint = true;
                     this.clickedPoint = point;
-                    this.decideCardPosition(20, 25,3,3);
+                    this.decideCardPosition(20, 25,3,3,markPointCard);
 
                     // update building Id
                     this.buildingDetails.id = point.id;
@@ -276,37 +282,40 @@ export default {
                     ctx.drawImage(this.locationMapIcon, point.x, point.y, 30, 30);
                 }
                 if (!isClickedOnPoint) {
-                    card.classList.add('d-none');
+                    markPointCard.classList.add('d-none');
                 }
             });
             this.ships.forEach(ship => {
                 if (((x-ship.x) <= ship.width && (x-ship.x) > 0) && ( (y-ship.y) <= ship.height) && (y-ship.y) > 0) {
                     isClickedOnPoint = true;
                     this.clickedPoint = {
-                        x: ship.x,
-                        y: ship.y
+                        ...ship,
+                        info:"ship",
+                        features : {
+                            "Durum": ship.statusType,
+                        }
                     }
-                    this.decideCardPosition(ship.width, ship.height,3,2.3);
-                    card.classList.remove('d-none');
+                    this.decideCardPosition(ship.width, ship.height,3,2.3,shipCard);
+                    shipCard.classList.remove('d-none');
+                    markPointCard.classList.add('d-none');
                 } else {
                 }
                 if (!isClickedOnPoint) {
-                    card.classList.add('d-none');
+                    shipCard.classList.add('d-none');
                 }
             });
         },
 
-        decideCardPosition(x,y,xFactor,yFactor) {
+        decideCardPosition(x,y,xFactor,yFactor,card) {
             let left = this.clickedPoint.x + x;
             let top = this.clickedPoint.y + y;
-            let card = document.querySelector('.card');
             
-            if(left + 100 > import.meta.env.VITE_APP_SCREEN_WIDTH) {
+            if(left + 300 > import.meta.env.VITE_APP_SCREEN_WIDTH) {
                 
                 left = this.clickedPoint.x - 100*xFactor;
                
             }
-            if(top + 250 > import.meta.env.VITE_APP_SCREEN_HEIGHT){
+            if(top + 300 > import.meta.env.VITE_APP_SCREEN_HEIGHT){
 
                     top = this.clickedPoint.y - 100*yFactor;
             }
@@ -558,6 +567,9 @@ export default {
             console.log('cancel');
             this.shipModel = {};
         },
+        openUpdateShipModal() {
+            console.log('openUpdateShipModal');
+        },
 
     },
 
@@ -575,21 +587,10 @@ export default {
             @mousedown="panStart" @mousemove="panMove" @mouseup="panEnd" @mouseleave="panEnd"
                 v-on="isSketchMode ? { click: handleCanvasClick } : isDrawMode ? { click: handleClickDrawMode } : isShipMode ? { click: handleClickShipDrawMode } : { click: handleCanvasCursor }">
             </canvas>
-            <div class="custom-card card position-absolute d-none animate__animated animate__fadeIn"
-                style="width: 18rem;">
-                <h6 class="custom-card__tag">{{ clickedPoint.name }}</h6>
-                <div class="card-body">
-                    <p class="card-text">Some informations about this building.</p>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">An item</li>
-                    <li class="list-group-item">A second item</li>
-                </ul>
-                <div class="card-body d-flex justify-content-center">
-                    <button class="card-link custom-card__link" @click="openUpdateModal">Düzenle</button>
-                    <button class="card-link custom-card__link">Kroki</button>
-                </div>
-            </div>
+            
+        <Card :clickedPoint="clickedPoint" :hasInnerSketch="false" :IsEditable="true" @openUpdateModal="openUpdateModal" id="markPointCard" />
+        <Card :clickedPoint="clickedPoint" :hasInnerSketch="false" :IsEditable="true" @openUpdateModal="openUpdateShipModal" id="shipCard" />
+
         </div>
     </div>
     <BuildingModalComponent ref="AddModalComponent" :modalTypeDetails="modalAddBuildingDetails"
@@ -599,7 +600,7 @@ export default {
         :inputDetails="buildingDetailsForUpdate" :footerButtonFuction="updateBuilding"
         :footerDeleteButtonFuction="deleteBuilding">
     </BuildingModalComponent>
-    <ModalComponent ref="AddShipModalComponent" :title="'deneme'" @save="addShip()" @cancel="cancelAddShip()">
+    <ModalComponent ref="AddShipModalComponent" :title="'Gemi Ekle'" @save="addShip()" @cancel="cancelAddShip()">
         <ShipAddContent :shipModel="shipModel" />
     </ModalComponent>
 </template>

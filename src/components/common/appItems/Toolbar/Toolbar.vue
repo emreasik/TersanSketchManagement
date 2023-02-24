@@ -26,11 +26,11 @@ export default {
             required: true
         }
     },
-    data() {
-        return {
-            activeIcon: false
-        };
-    },
+    // data() {
+    //     return {
+    //         activeIcon: false
+    //     };
+    // },
     methods: {
         setToolButtonActive(id) {
             this.$emit('tool-button-clicked', id);
